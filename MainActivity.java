@@ -1,0 +1,1 @@
+// Placeholder content for src/main/java/com/example/gomhoralahly/MainActivity.java

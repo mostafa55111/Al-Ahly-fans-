@@ -1,0 +1,1 @@
+// Placeholder content for proguard-rules.pro
