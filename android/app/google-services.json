@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "725028676186",
+    "firebase_url": "https://gomhor-al-ahly-default-rtdb.firebaseio.com",
+    "project_id": "gomhor-al-ahly",
+    "storage_bucket": "gomhor-al-ahly.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725028676186:android:95022827cd693f50f62e63",
+        "android_client_info": {
+          "package_name": "com.example.gomhor_alahly_clean_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3ckP-jmdTKm657LFDGsI_so_JSN3qbGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
