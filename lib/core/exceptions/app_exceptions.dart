@@ -1,5 +1,5 @@
 /// استثناءات التطبيق المخصصة
-/// 
+///
 /// تحتوي هذه الملف على جميع أنواع الاستثناءات المخصصة للتطبيق
 /// مما يسمح بمعالجة الأخطاء بشكل أكثر دقة وتفصيلاً
 library;
@@ -32,8 +32,8 @@ class NetworkException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'NETWORK_ERROR',
-  );
+          code: code ?? 'NETWORK_ERROR',
+        );
 }
 
 /// استثناء انقطاع الاتصال
@@ -43,8 +43,8 @@ class NoInternetException extends NetworkException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'NO_INTERNET',
-  );
+          code: 'NO_INTERNET',
+        );
 }
 
 /// استثناء انتهاء مهلة الاتصال
@@ -54,8 +54,8 @@ class TimeoutException extends NetworkException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'TIMEOUT',
-  );
+          code: 'TIMEOUT',
+        );
 }
 
 /// استثناء فشل الاتصال
@@ -65,8 +65,8 @@ class ConnectionFailedException extends NetworkException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'CONNECTION_FAILED',
-  );
+          code: 'CONNECTION_FAILED',
+        );
 }
 
 // ===== Server Exceptions =====
@@ -82,8 +82,8 @@ class ServerException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'SERVER_ERROR',
-  );
+          code: code ?? 'SERVER_ERROR',
+        );
 }
 
 /// استثناء خطأ 400
@@ -93,9 +93,9 @@ class BadRequestException extends ServerException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    statusCode: 400,
-    code: 'BAD_REQUEST',
-  );
+          statusCode: 400,
+          code: 'BAD_REQUEST',
+        );
 }
 
 /// استثناء خطأ 401 (غير مصرح)
@@ -105,9 +105,9 @@ class UnauthorizedException extends ServerException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    statusCode: 401,
-    code: 'UNAUTHORIZED',
-  );
+          statusCode: 401,
+          code: 'UNAUTHORIZED',
+        );
 }
 
 /// استثناء خطأ 403 (محظور)
@@ -117,9 +117,9 @@ class ForbiddenException extends ServerException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    statusCode: 403,
-    code: 'FORBIDDEN',
-  );
+          statusCode: 403,
+          code: 'FORBIDDEN',
+        );
 }
 
 /// استثناء خطأ 404 (غير موجود)
@@ -129,9 +129,9 @@ class NotFoundException extends ServerException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    statusCode: 404,
-    code: 'NOT_FOUND',
-  );
+          statusCode: 404,
+          code: 'NOT_FOUND',
+        );
 }
 
 /// استثناء خطأ 500 (خطأ في الخادم)
@@ -141,9 +141,9 @@ class InternalServerException extends ServerException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    statusCode: 500,
-    code: 'INTERNAL_SERVER_ERROR',
-  );
+          statusCode: 500,
+          code: 'INTERNAL_SERVER_ERROR',
+        );
 }
 
 // ===== Firebase Exceptions =====
@@ -156,8 +156,8 @@ class FirebaseException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'FIREBASE_ERROR',
-  );
+          code: code ?? 'FIREBASE_ERROR',
+        );
 }
 
 /// استثناء فشل المصادقة
@@ -168,8 +168,8 @@ class AuthenticationException extends FirebaseException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'AUTH_ERROR',
-  );
+          code: code ?? 'AUTH_ERROR',
+        );
 }
 
 /// استثناء فشل قاعدة البيانات
@@ -180,8 +180,8 @@ class DatabaseException extends FirebaseException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'DATABASE_ERROR',
-  );
+          code: code ?? 'DATABASE_ERROR',
+        );
 }
 
 /// استثناء فشل التخزين
@@ -192,8 +192,8 @@ class StorageException extends FirebaseException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'STORAGE_ERROR',
-  );
+          code: code ?? 'STORAGE_ERROR',
+        );
 }
 
 // ===== Data Exceptions =====
@@ -206,8 +206,8 @@ class DataException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'DATA_ERROR',
-  );
+          code: code ?? 'DATA_ERROR',
+        );
 }
 
 /// استثناء البيانات الفارغة
@@ -217,8 +217,8 @@ class EmptyDataException extends DataException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'EMPTY_DATA',
-  );
+          code: 'EMPTY_DATA',
+        );
 }
 
 /// استثناء فشل تحويل البيانات
@@ -228,8 +228,8 @@ class DataConversionException extends DataException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'DATA_CONVERSION_ERROR',
-  );
+          code: 'DATA_CONVERSION_ERROR',
+        );
 }
 
 /// استثناء البيانات غير الصحيحة
@@ -239,8 +239,8 @@ class InvalidDataException extends DataException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'INVALID_DATA',
-  );
+          code: 'INVALID_DATA',
+        );
 }
 
 // ===== Validation Exceptions =====
@@ -256,8 +256,8 @@ class ValidationException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'VALIDATION_ERROR',
-  );
+          code: code ?? 'VALIDATION_ERROR',
+        );
 }
 
 // ===== Cache Exceptions =====
@@ -270,8 +270,8 @@ class CacheException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'CACHE_ERROR',
-  );
+          code: code ?? 'CACHE_ERROR',
+        );
 }
 
 // ===== Permission Exceptions =====
@@ -284,8 +284,8 @@ class PermissionException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: code ?? 'PERMISSION_ERROR',
-  );
+          code: code ?? 'PERMISSION_ERROR',
+        );
 }
 
 // ===== Unknown Exception =====
@@ -297,6 +297,6 @@ class UnknownException extends AppException {
     super.originalException,
     super.stackTrace,
   }) : super(
-    code: 'UNKNOWN_ERROR',
-  );
+          code: 'UNKNOWN_ERROR',
+        );
 }

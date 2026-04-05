@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 /// Firebase Service
@@ -17,9 +18,6 @@ class FirebaseService {
   late DatabaseReference _achievementsRef;
   late DatabaseReference _leaderboardRef;
   late DatabaseReference _matchesRef;
-  late DatabaseReference _storiesRef;
-  late DatabaseReference _commentsRef;
-  late DatabaseReference _notificationsRef;
 
   /// تهيئة الـ References
   void initialize() {
@@ -29,11 +27,10 @@ class FirebaseService {
     _achievementsRef = FirebaseDatabase.instance.ref('achievements');
     _leaderboardRef = FirebaseDatabase.instance.ref('leaderboard');
     _matchesRef = FirebaseDatabase.instance.ref('matches');
-    _storiesRef = FirebaseDatabase.instance.ref('stories');
-    _commentsRef = FirebaseDatabase.instance.ref('comments');
-    _notificationsRef = FirebaseDatabase.instance.ref('notifications');
 
-    print('✅ Firebase Service initialized');
+    if (kDebugMode) {
+      debugPrint('✅ Firebase Service initialized');
+    }
   }
 
   // ==================== Posts ====================
@@ -63,7 +60,8 @@ class FirebaseService {
       final data = snapshot.value as Map<dynamic, dynamic>;
 
       for (final entry in data.entries) {
-        posts.add(Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
+        posts.add(
+            Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
       }
 
       return posts;
@@ -97,7 +95,7 @@ class FirebaseService {
   Future<void> likePost(String postId, String userId) async {
     try {
       await _postsRef.child(postId).child('likes').child(userId).set(true);
-      
+
       final snapshot = await _postsRef.child(postId).child('likesCount').get();
       final currentLikes = (snapshot.value as int?) ?? 0;
       await _postsRef.child(postId).update({'likesCount': currentLikes + 1});
@@ -110,7 +108,7 @@ class FirebaseService {
   Future<void> unlikePost(String postId, String userId) async {
     try {
       await _postsRef.child(postId).child('likes').child(userId).remove();
-      
+
       final snapshot = await _postsRef.child(postId).child('likesCount').get();
       final currentLikes = (snapshot.value as int?) ?? 0;
       if (currentLikes > 0) {
@@ -124,7 +122,8 @@ class FirebaseService {
   // ==================== Users ====================
 
   /// إنشاء ملف تعريفي للمستخدم
-  Future<void> createUserProfile(String userId, Map<String, dynamic> userData) async {
+  Future<void> createUserProfile(
+      String userId, Map<String, dynamic> userData) async {
     try {
       await _usersRef.child(userId).set({
         ...userData,
@@ -151,7 +150,8 @@ class FirebaseService {
   }
 
   /// تحديث بيانات المستخدم
-  Future<void> updateUserProfile(String userId, Map<String, dynamic> updates) async {
+  Future<void> updateUserProfile(
+      String userId, Map<String, dynamic> updates) async {
     try {
       await _usersRef.child(userId).update(updates);
     } catch (e) {
@@ -166,13 +166,19 @@ class FirebaseService {
     try {
       await _followsRef.child(currentUserId).child(targetUserId).set(true);
 
-      final snapshot = await _usersRef.child(targetUserId).child('followersCount').get();
+      final snapshot =
+          await _usersRef.child(targetUserId).child('followersCount').get();
       final currentFollowers = (snapshot.value as int?) ?? 0;
-      await _usersRef.child(targetUserId).update({'followersCount': currentFollowers + 1});
+      await _usersRef
+          .child(targetUserId)
+          .update({'followersCount': currentFollowers + 1});
 
-      final snapshot2 = await _usersRef.child(currentUserId).child('followingCount').get();
+      final snapshot2 =
+          await _usersRef.child(currentUserId).child('followingCount').get();
       final currentFollowing = (snapshot2.value as int?) ?? 0;
-      await _usersRef.child(currentUserId).update({'followingCount': currentFollowing + 1});
+      await _usersRef
+          .child(currentUserId)
+          .update({'followingCount': currentFollowing + 1});
     } catch (e) {
       throw Exception('فشل المتابعة: $e');
     }
@@ -183,16 +189,22 @@ class FirebaseService {
     try {
       await _followsRef.child(currentUserId).child(targetUserId).remove();
 
-      final snapshot = await _usersRef.child(targetUserId).child('followersCount').get();
+      final snapshot =
+          await _usersRef.child(targetUserId).child('followersCount').get();
       final currentFollowers = (snapshot.value as int?) ?? 0;
       if (currentFollowers > 0) {
-        await _usersRef.child(targetUserId).update({'followersCount': currentFollowers - 1});
+        await _usersRef
+            .child(targetUserId)
+            .update({'followersCount': currentFollowers - 1});
       }
 
-      final snapshot2 = await _usersRef.child(currentUserId).child('followingCount').get();
+      final snapshot2 =
+          await _usersRef.child(currentUserId).child('followingCount').get();
       final currentFollowing = (snapshot2.value as int?) ?? 0;
       if (currentFollowing > 0) {
-        await _usersRef.child(currentUserId).update({'followingCount': currentFollowing - 1});
+        await _usersRef
+            .child(currentUserId)
+            .update({'followingCount': currentFollowing - 1});
       }
     } catch (e) {
       throw Exception('فشل إلغاء المتابعة: $e');
@@ -202,7 +214,8 @@ class FirebaseService {
   // ==================== Achievements ====================
 
   /// إضافة إنجاز للمستخدم
-  Future<void> addAchievement(String userId, Map<String, dynamic> achievement) async {
+  Future<void> addAchievement(
+      String userId, Map<String, dynamic> achievement) async {
     try {
       final achievementRef = _achievementsRef.child(userId).push();
       await achievementRef.set({
@@ -224,7 +237,8 @@ class FirebaseService {
       final data = snapshot.value as Map<dynamic, dynamic>;
 
       for (final entry in data.entries) {
-        achievements.add(Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
+        achievements.add(
+            Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
       }
 
       return achievements;
@@ -236,7 +250,8 @@ class FirebaseService {
   // ==================== Leaderboard ====================
 
   /// تحديث ترتيب المستخدم
-  Future<void> updateLeaderboardRank(String userId, Map<String, dynamic> rankData) async {
+  Future<void> updateLeaderboardRank(
+      String userId, Map<String, dynamic> rankData) async {
     try {
       await _leaderboardRef.child(userId).set({
         ...rankData,
@@ -257,7 +272,8 @@ class FirebaseService {
       final data = snapshot.value as Map<dynamic, dynamic>;
 
       for (final entry in data.entries) {
-        leaderboard.add(Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
+        leaderboard.add(
+            Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
       }
 
       return leaderboard;
@@ -297,14 +313,16 @@ class FirebaseService {
   /// الحصول على المباريات المباشرة
   Future<List<Map<String, dynamic>>> getLiveMatches() async {
     try {
-      final snapshot = await _matchesRef.orderByChild('status').equalTo('live').get();
+      final snapshot =
+          await _matchesRef.orderByChild('status').equalTo('live').get();
       if (!snapshot.exists) return [];
 
       final matches = <Map<String, dynamic>>[];
       final data = snapshot.value as Map<dynamic, dynamic>;
 
       for (final entry in data.entries) {
-        matches.add(Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
+        matches.add(
+            Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
       }
 
       return matches;

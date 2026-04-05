@@ -1,47 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
-import 'package:gomhor_alahly_clean_new/core/firebase/firebase_config.dart';
-import 'package:gomhor_alahly_clean_new/core/firebase/firebase_service.dart';
+import 'package:gomhor_alahly_clean_new/firebase_options.dart';
 import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/splash_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/login_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/profile_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/reels_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/voting_match_center/presentation/pages/match_center_screen.dart';
-import 'firebase_options.dart';
-
-// Gemini API Configuration
-const String geminiApiKey = 'AIzaSyCNlqhPN6dkOTjF8DfV9IE4wyEzWjrCgjQ';
-
-// Football API Configuration
-const String footballApiKey = '8c16585903c335eb82435488feac3937';
-
-// Cloudinary API Configuration
-const String cloudinaryApiKey = '497232166977864';
-const String cloudinaryCloudName = 'dubc6k1iy';
-
-/// Initialize Gemini API Key
-void initializeGeminiAPI() {
-  debugPrint('Gemini API initialized successfully');
-}
+import 'package:gomhor_alahly_clean_new/core/di/service_locator_improved.dart';
+import 'package:gomhor_alahly_clean_new/test_reels_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
+    print('DEBUG: 🚀 Starting app initialization...');
+    
+    // Initialize Firebase with timeout
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        print('DEBUG: ⏰ Firebase initialization timeout - continuing without Firebase');
+        throw TimeoutException('Firebase initialization timeout', const Duration(seconds: 10));
+      },
     );
     
-    await FirebaseConfig.initialize();
-    FirebaseService().initialize();
-    initializeGeminiAPI();
+    print("DEBUG: Firebase Initialized successfully");
+    print("DEBUG: Firebase App Name: ${Firebase.app().name}");
+    print("DEBUG: Firebase Database URL: ${Firebase.app().options.databaseURL}");
+    
+    // Setup dependency injection with timeout
+    await setupServiceLocator().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        print('DEBUG: ⏰ Service Locator setup timeout - continuing without DI');
+        throw TimeoutException('Service Locator setup timeout', const Duration(seconds: 5));
+      },
+    );
+    
+    print('DEBUG: � Service Locator initialized successfully!');
+    print('DEBUG: 🚀 App initialization complete!');
+    print('DEBUG: 🔥 Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
+    print('DEBUG: 🔥 Realtime Database URL: ${FirebaseDatabase.instance.databaseURL}');
+
+    runApp(
+      const MyApp(),
+    );
   } catch (e) {
-    debugPrint('❌ Initialization error: $e');
+    print('DEBUG: ❌ App initialization error: $e');
+    print('DEBUG: ❌ Stack trace: ${StackTrace.current}');
+    
+    // Run app without Firebase if initialization fails
+    runApp(
+      const MyApp(),
+    );
   }
-  
-  runApp(const AlAhlySuperApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const AlAhlySuperApp();
+  }
 }
 
 class AlAhlySuperApp extends StatelessWidget {
@@ -54,120 +77,6 @@ class AlAhlySuperApp extends StatelessWidget {
       title: 'جمهور الأهلي - نادي القرن',
       theme: AppTheme.darkTheme(),
       home: const SplashScreen(),
-    );
-  }
-}
-
-class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  late Stream<User?> _authStateStream;
-
-  @override
-  void initState() {
-    super.initState();
-    _authStateStream = FirebaseAuth.instance.authStateChanges();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: _authStateStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SplashScreen();
-        }
-
-        if (snapshot.hasData && snapshot.data != null) {
-          return const MainHomeScreen();
-        } else {
-          return const LoginScreen();
-        }
-      },
-    );
-  }
-}
-
-class MainHomeScreen extends StatefulWidget {
-  const MainHomeScreen({super.key});
-
-  @override
-  State<MainHomeScreen> createState() => _MainHomeScreenState();
-}
-
-class _MainHomeScreenState extends State<MainHomeScreen> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _pages = [
-    const ReelsScreen(),
-    const MatchCenterScreen(),
-    const ProfileScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 320),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.03, 0),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
-          );
-        },
-        child: KeyedSubtree(
-          key: ValueKey<int>(_selectedIndex),
-          child: _pages[_selectedIndex],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) => setState(() => _selectedIndex = index),
-            backgroundColor: const Color(0xFF111318),
-            selectedItemColor: const Color(0xFFE1306C),
-            unselectedItemColor: const Color(0xFF8E8E93),
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            selectedFontSize: 12,
-            unselectedFontSize: 11,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.smart_display_outlined),
-                activeIcon: Icon(Icons.smart_display_rounded),
-                label: 'الريلز',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.sports_soccer_outlined),
-                activeIcon: Icon(Icons.sports_soccer),
-                label: 'المباريات',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_rounded),
-                activeIcon: Icon(Icons.person_rounded),
-                label: 'حسابي',
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

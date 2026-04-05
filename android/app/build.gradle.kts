@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -27,7 +30,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.gomhor_alahly_clean_new"
-        minSdk = flutter.minSdkVersion // مهم جداً للإشعارات
+        minSdk = flutter.minSdkVersion // Firebase requires at least API 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

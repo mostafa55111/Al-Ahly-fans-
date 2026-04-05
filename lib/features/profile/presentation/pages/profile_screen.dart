@@ -4,11 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
+// import 'dart:io';
+// import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
 import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/login_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/data/models/video_model.dart';
 
 /// بروفايل بأسلوب TikTok: رأس مركزي، إحصائيات، أزرار، تبويب فيديوهات / محفوظات، شبكة بلا فراغات.
 class ProfileScreen extends StatefulWidget {
@@ -18,12 +19,13 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
   final user = FirebaseAuth.instance.currentUser;
   late DatabaseReference dbRef;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
+  // final CloudinaryService _cloudinaryService = CloudinaryService();
   late TabController _tabController;
 
   @override
@@ -38,17 +40,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  Set<String> _savedIdsFromEvent(DatabaseEvent? ev) {
-    final ids = <String>{};
-    final v = ev?.snapshot.value;
-    if (v is Map) {
-      v.forEach((k, val) {
-        if (val == true) ids.add(k.toString());
-      });
-    }
-    return ids;
   }
 
   void _showAdvancedSearch() {
@@ -77,9 +68,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 "البحث المتقدم",
-                style: TextStyle(color: Color(0xFFC5A059), fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               TextField(
@@ -88,7 +82,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 decoration: InputDecoration(
                   hintText: "ابحث عن مشجعين، منشورات، أو أخبار...",
                   hintStyle: const TextStyle(color: Colors.white38),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFC5A059)),
+                  prefixIcon:
+                      const Icon(Icons.search, color: Color(0xFFC5A059)),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
@@ -135,12 +130,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           children: [
             Text(
               "الإشعارات",
-              style: TextStyle(color: Color(0xFFC5A059), fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Color(0xFFC5A059),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
-            Icon(Icons.notifications_off_outlined, color: Colors.grey, size: 50),
+            Icon(Icons.notifications_off_outlined,
+                color: Colors.grey, size: 50),
             SizedBox(height: 10),
-            Text("لا توجد إشعارات جديدة حالياً", style: TextStyle(color: Colors.white70)),
+            Text("لا توجد إشعارات جديدة حالياً",
+                style: TextStyle(color: Colors.white70)),
             SizedBox(height: 20),
           ],
         ),
@@ -163,33 +163,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  void _showAlMaredAssistant() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Row(
-          children: [
-            Image.asset('assets/images/logo.png', width: 30, errorBuilder: (c, e, s) => const Icon(Icons.bolt, color: Colors.red)),
-            const SizedBox(width: 10),
-            const Text("المارد الأهلاوي", style: TextStyle(color: Color(0xFFC5A059))),
-          ],
-        ),
-        content: const Text(
-          "أنا المارد الأهلاوي، مساعدك الذكي. كيف يمكنني مساعدتك اليوم في تشجيع نادي القرن؟",
-          style: TextStyle(color: Colors.white),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("شكراً يا مارد", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _editProfileField({
     required String fieldKey,
     required String title,
@@ -205,10 +178,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           controller: controller,
           style: const TextStyle(color: Colors.white),
           maxLines: fieldKey == 'bio' ? 3 : 1,
-          decoration: const InputDecoration(hintText: 'اكتب هنا', hintStyle: TextStyle(color: Colors.white54)),
+          decoration: const InputDecoration(
+              hintText: 'اكتب هنا',
+              hintStyle: TextStyle(color: Colors.white54)),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
             child: const Text('حفظ'),
@@ -218,10 +195,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
 
     if (result == null || result.isEmpty || user == null) return;
-    await FirebaseDatabase.instance.ref('users/${user!.uid}/$fieldKey').set(result);
+    await FirebaseDatabase.instance
+        .ref('users/${user!.uid}/$fieldKey')
+        .set(result);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم التعديل بنجاح'), backgroundColor: Colors.green),
+      const SnackBar(
+          content: Text('تم التعديل بنجاح'), backgroundColor: Colors.green),
     );
   }
 
@@ -237,6 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (image == null || user == null) return;
 
     try {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('جاري رفع الصورة...'),
@@ -244,31 +225,38 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       );
 
-      final result = await _cloudinaryService.uploadImage(
-        imageFile: File(image.path),
-        userId: user!.uid,
-        userName: user!.displayName ?? 'مشجع أهلاوي',
-      );
+      // final result = await _cloudinaryService.uploadImage(
+      //   imageFile: File(image.path),
+      //   userId: user!.uid,
+      //   userName: user!.displayName ?? 'مشجع أهلاوي',
+      // );
+      
+      // Temporary stub to prevent errors
+      final result = {'success': false, 'error': 'Cloudinary service disabled'};
 
-      if (result != null && result['success'] == true) {
+      if (result['success'] == true) {
         final imageUrl = result['url']?.toString();
         if (imageUrl != null) {
-          await FirebaseDatabase.instance.ref('users/${user!.uid}/profilePic').set(imageUrl);
+          await FirebaseDatabase.instance
+              .ref('users/${user!.uid}/profilePic')
+              .set(imageUrl);
           await user!.updatePhotoURL(imageUrl);
-          
+
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('تم تحديث صورة البروفايل بنجاح! 🦅'),
               backgroundColor: Colors.green,
             ),
           );
-          
-          if (mounted) setState(() {});
+
+          setState(() {});
         }
       } else {
-        throw result?['error'] ?? 'فشل الرفع';
+        throw result['error'] ?? 'فشل الرفع';
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('خطأ في رفع الصورة: $e'),
@@ -276,15 +264,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       );
     }
-  }
-
-  void _addStory() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('القصص قريباً — تابع التحديثات'),
-        backgroundColor: Color(0xFF2374E1),
-      ),
-    );
   }
 
   void _showEditProfileMenu(Map<String, dynamic> userData) {
@@ -300,7 +279,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           children: [
             ListTile(
               leading: const Icon(Icons.badge_outlined, color: Colors.white70),
-              title: const Text('تعديل الاسم', style: TextStyle(color: Colors.white)),
+              title: const Text('تعديل الاسم',
+                  style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(ctx);
                 _editProfileField(
@@ -312,7 +292,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             ListTile(
               leading: const Icon(Icons.notes_rounded, color: Colors.white70),
-              title: const Text('تعديل النبذة', style: TextStyle(color: Colors.white)),
+              title: const Text('تعديل النبذة',
+                  style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(ctx);
                 _editProfileField(
@@ -324,7 +305,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             ListTile(
               leading: const Icon(Icons.alternate_email, color: Colors.white70),
-              title: const Text('تعديل اسم المستخدم', style: TextStyle(color: Colors.white)),
+              title: const Text('تعديل اسم المستخدم',
+                  style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(ctx);
                 _editProfileField(
@@ -351,7 +333,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (user == null) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: Text('سجّل الدخول لعرض البروفايل', style: TextStyle(color: Colors.white70))),
+        body: Center(
+            child: Text('سجّل الدخول لعرض البروفايل',
+                style: TextStyle(color: Colors.white70))),
       );
     }
 
@@ -367,19 +351,25 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               child: Center(
                 child: Text(
                   "إعدادات الحساب",
-                  style: TextStyle(color: Color(0xFFC5A059), fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.person_add_alt_1_outlined, color: Colors.white),
-              title: const Text("إضافة حساب جديد", style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.person_add_alt_1_outlined,
+                  color: Colors.white),
+              title: const Text("إضافة حساب جديد",
+                  style: TextStyle(color: Colors.white)),
               onTap: _addNewAccount,
             ),
             const Divider(color: Colors.white10),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: Colors.red),
-              title: const Text("تسجيل الخروج", style: TextStyle(color: Colors.red)),
+              title: const Text("تسجيل الخروج",
+                  style: TextStyle(color: Colors.red)),
               onTap: _handleLogout,
             ),
           ],
@@ -388,27 +378,31 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title: Text(
-          user!.displayName ?? 'جمهور الأهلي',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
-        ),
-        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.person_add_outlined, color: Colors.white, size: 26),
-          onPressed: _addNewAccount,
+          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 30),
+          onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+        ),
+        titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.reply_rounded,
+                  color: Colors.white, size: 28),
+              onPressed: _showAdvancedSearch,
+            ),
+            IconButton(
+              icon: const Icon(Icons.change_history_rounded,
+                  color: Colors.white, size: 24),
+              onPressed: _showNotifications,
+            ),
+          ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.white, size: 26),
-            onPressed: _showAdvancedSearch,
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
-            onPressed: _showNotifications,
-          ),
-          IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 28),
-            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            icon: const Icon(Icons.person_add_alt_1_rounded,
+                color: Colors.white, size: 29),
+            onPressed: _addNewAccount,
           ),
         ],
       ),
@@ -416,10 +410,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         stream: dbRef.onValue,
         builder: (context, snapshot) {
           if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFFFE2C55)));
+            return const Center(
+                child: CircularProgressIndicator(color: Color(0xFFFE2C55)));
           }
           final currentUser = user!;
-          final userData = Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
+          final userData =
+              Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
           return Column(
             children: [
               Expanded(
@@ -430,45 +426,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     child: Column(
                       children: [
                         _buildTikTokProfileCenter(userData),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _tikTokOutlineButton(
-                                  label: 'إضافة قصة',
-                                  onTap: _addStory,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _tikTokOutlineButton(
-                                  label: 'المارد',
-                                  onTap: _showAlMaredAssistant,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                height: 44,
-                                width: 44,
-                                child: OutlinedButton(
-                                  onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    side: const BorderSide(color: Colors.white24),
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                  child: const Icon(Icons.more_horiz, size: 22),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: _buildBioBlock(userData),
-                        ),
                         const SizedBox(height: 8),
                       ],
                     ),
@@ -479,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 color: Colors.black,
                 child: TabBar(
                   controller: _tabController,
-                  indicatorColor: Colors.white,
+                  indicatorColor: Theme.of(context).colorScheme.primary,
                   indicatorWeight: 2,
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white38,
@@ -514,23 +471,28 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final following = '${userData['following'] ?? 0}';
     final likes = '${userData['likes'] ?? 0}';
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.bottomRight,
-            children: [
-              CircleAvatar(
-                radius: 48,
-                backgroundColor: const Color(0xFF161616),
-                backgroundImage: pic.isNotEmpty ? CachedNetworkImageProvider(pic) : null,
-                child: pic.isEmpty ? const Icon(Icons.person, color: Colors.white38, size: 52) : null,
-              ),
+    return Column(
+      children: [
+        // Profile picture with perfect centering
+        Center(
+          child: SizedBox(
+            width: 104,
+            height: 104,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomCenter,
+              children: [
+                CircleAvatar(
+                  radius: 52,
+                  backgroundColor: const Color(0xFF161616),
+                  backgroundImage:
+                      pic.isNotEmpty ? CachedNetworkImageProvider(pic) : null,
+                  child: pic.isEmpty
+                      ? const Icon(Icons.person, color: Colors.white38, size: 56)
+                      : null,
+                ),
               Positioned(
-                right: -2,
-                bottom: -2,
+                bottom: -4,
                 child: Material(
                   color: const Color(0xFFFE2C55),
                   shape: const CircleBorder(),
@@ -538,80 +500,98 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     customBorder: const CircleBorder(),
                     onTap: _changeProfilePhoto,
                     child: const Padding(
-                      padding: EdgeInsets.all(7),
-                      child: Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                      padding: EdgeInsets.all(6),
+                      child:
+                          Icon(Icons.camera_alt, color: Colors.white, size: 14),
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+        ),
+        ),
+        const SizedBox(height: 16),
+
+        // Name and edit button
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                onPressed: () => _editProfileField(
-                  fieldKey: 'name',
-                  title: 'تعديل الاسم',
-                  currentValue: userData['name']?.toString() ?? '',
-                ),
-                icon: const Icon(Icons.edit, color: Colors.white38, size: 18),
+            ),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              onPressed: () => _editProfileField(
+                fieldKey: 'name',
+                title: 'تعديل الاسم',
+                currentValue: userData['name']?.toString() ?? '',
               ),
-            ],
-          ),
-          Text(
-            '@$handle',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _tikTokStatColumn(following, 'يتابع'),
-              _tikTokDivider(),
-              _tikTokStatColumn(followers, 'متابِعون'),
-              _tikTokDivider(),
-              _tikTokStatColumn(likes, 'إعجابات'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _tikTokPrimaryButton(
-                  label: 'تعديل الملف الشخصي',
-                  filled: true,
-                  onTap: () => _showEditProfileMenu(userData),
-                ),
+              icon: const Icon(Icons.edit, color: Colors.white38, size: 16),
+            ),
+          ],
+        ),
+
+        // Username
+        Text(
+          '@$handle',
+          style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Centered stats row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _tikTokStatColumn(following, 'يتابع'),
+            _tikTokDivider(),
+            _tikTokStatColumn(followers, 'متابِعون'),
+            _tikTokDivider(),
+            _tikTokStatColumn(likes, 'إعجابات'),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        // Bio section
+        _buildBioBlock(userData),
+
+        const SizedBox(height: 16),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: _tikTokPrimaryButton(
+                label: 'تعديل الملف الشخصي',
+                filled: true,
+                onTap: () => _showEditProfileMenu(userData),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _tikTokPrimaryButton(
-                  label: 'مشاركة الملف',
-                  filled: false,
-                  onTap: () => _shareProfile(userData),
-                ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _tikTokPrimaryButton(
+                label: 'مشاركة الملف',
+                filled: false,
+                onTap: () => _shareProfile(userData),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -627,29 +607,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       children: [
         Text(
           value,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
+          style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
         ),
       ],
-    );
-  }
-
-  Widget _tikTokOutlineButton({required String label, required VoidCallback onTap}) {
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: const BorderSide(color: Colors.white24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-      ),
     );
   }
 
@@ -664,20 +631,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ? FilledButton(
               onPressed: onTap,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF252525),
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              child: Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 13)),
             )
           : OutlinedButton(
               onPressed: onTap,
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.white24),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary, width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              child: Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 13)),
             ),
     );
   }
@@ -712,11 +686,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildMyVideosTab(String uid, Map<String, dynamic> userData) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _cloudinaryService.getUserReelsStream(uid),
+    return StreamBuilder<List<VideoModel>>(
+      stream: Stream.empty(), // _cloudinaryService.getUserReelsStream(uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFFFE2C55)));
+          return const Center(
+              child: CircularProgressIndicator(
+                  color: Color(0xFFFE2C55)));
         }
         final list = snapshot.data ?? [];
         if (list.isEmpty) {
@@ -748,21 +724,25 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildSavedVideosTab(String uid) {
     return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseDatabase.instance.ref('users/$uid/savedReels').onValue,
+      stream: FirebaseDatabase.instance
+          .ref('users/$uid/savedVideos')
+          .onValue,
       builder: (context, savedSnap) {
-        return StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _cloudinaryService.getReelsStream(),
+        return StreamBuilder<List<VideoModel>>(
+          stream: Stream.empty(), // _cloudinaryService.getReelsStream(),
           builder: (context, reelsSnap) {
-            final ids = _savedIdsFromEvent(savedSnap.data);
+            if (savedSnap.data?.snapshot.value == null) {
+              return const Center(child: Text('No saved videos'));
+            }
+            final savedData = savedSnap.data!.snapshot.value as Map<dynamic, dynamic>? ?? {};
+            final ids = savedData.keys.toSet();
             final all = reelsSnap.data ?? [];
-            final list = all.where((r) => ids.contains(r['id']?.toString())).toList();
-            list.sort((a, b) {
-              final da = a['createdAt']?.toString() ?? '';
-              final db = b['createdAt']?.toString() ?? '';
-              return db.compareTo(da);
-            });
+            final list = all.where((r) => ids.contains(r.id)).toList();
+            list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
             if (reelsSnap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: Color(0xFFFE2C55)));
+              return const Center(
+                  child: CircularProgressIndicator(
+                      color: Color(0xFFFE2C55)));
             }
             if (list.isEmpty) {
               return const Center(
@@ -796,74 +776,93 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _reelsGrid({
-    required List<Map<String, dynamic>> list,
-    required void Function(int index) onCellTap,
+    required List<VideoModel> list,
+    required void Function(int) onCellTap,
   }) {
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(2, 4, 2, 24),
-      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.zero, // No padding for TikTok-style seamless grid
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 2,
-        mainAxisSpacing: 2,
-        childAspectRatio: 0.72,
+        crossAxisSpacing: 1.0, // Minimal spacing for seamless look
+        mainAxisSpacing: 1.0,
+        childAspectRatio: 0.68, // Slightly taller for TikTok feel
       ),
       itemCount: list.length,
       itemBuilder: (context, index) {
         final r = list[index];
-        final thumb = r['thumbnail']?.toString() ?? '';
-        final likes = r['likes'] ?? 0;
+        final thumb = r.thumbnailUrl;
         return GestureDetector(
           onTap: () => onCellTap(index),
-          child: Container(
-            color: const Color(0xFF0F0F0F),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (thumb.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: thumb,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(
-                      color: const Color(0xFF1A1A1A),
-                      child: const Icon(Icons.play_circle_outline, color: Colors.white24, size: 36),
-                    ),
-                  )
-                else
-                  Container(
-                    color: const Color(0xFF1A1A1A),
-                    child: const Icon(Icons.play_circle_outline, color: Colors.white24, size: 36),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: thumb,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.white10,
+                  child: const Center(
+                    child: Icon(Icons.play_circle_outline,
+                        color: Colors.white24, size: 24),
                   ),
-                Positioned(
-                  left: 4,
-                  bottom: 4,
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.black26,
+                  child: const Center(
+                    child: Icon(Icons.error_outline,
+                        color: Colors.white24, size: 20),
+                  ),
+                ),
+              ),
+              // TikTok-style overlay with play icon and likes
+              Positioned(
+                bottom: 4,
+                left: 4,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 15),
+                      const Icon(Icons.play_arrow_outlined,
+                          color: Colors.white, size: 14),
+                      const SizedBox(width: 2),
                       Text(
-                        '$likes',
+                        _formatCount(r.likesCount ?? 0),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
     );
   }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
 }
 
 /// تشغيل فيديو بملء الشاشة من البروفايل (تمرير عمودي بين فيديوهات الشبكة).
 class ProfileReelPlayerPage extends StatefulWidget {
-  final List<Map<String, dynamic>> reels;
+  final List<VideoModel> reels;
   final int initialIndex;
   final String? displayName;
 
@@ -906,7 +905,7 @@ class _ProfileReelPlayerPageState extends State<ProfileReelPlayerPage> {
             physics: const ClampingScrollPhysics(parent: PageScrollPhysics()),
             itemCount: widget.reels.length,
             itemBuilder: (context, index) {
-              final url = widget.reels[index]['videoUrl']?.toString() ?? '';
+              final url = widget.reels[index].videoUrl;
               return _SingleReelPlayer(videoUrl: url);
             },
           ),
@@ -914,7 +913,8 @@ class _ProfileReelPlayerPageState extends State<ProfileReelPlayerPage> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 if (widget.displayName != null)
@@ -960,7 +960,9 @@ class _SingleReelPlayerState extends State<_SingleReelPlayer> {
       _err = true;
       return;
     }
-    final controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))..setLooping(true);
+    final controller =
+        VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+          ..setLooping(true);
     _c = controller;
     controller.initialize().then((_) {
       if (mounted) {
@@ -981,10 +983,12 @@ class _SingleReelPlayerState extends State<_SingleReelPlayer> {
   @override
   Widget build(BuildContext context) {
     if (_err || _c == null) {
-      return const Center(child: Icon(Icons.error_outline, color: Colors.white38, size: 48));
+      return const Center(
+          child: Icon(Icons.error_outline, color: Colors.white38, size: 48));
     }
     if (!_ready) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.white));
     }
     return GestureDetector(
       onTap: () {

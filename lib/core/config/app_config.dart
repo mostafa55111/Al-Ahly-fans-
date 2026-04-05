@@ -1,5 +1,5 @@
 /// تكوين التطبيق الآمن
-/// 
+///
 /// هذا الملف يدير جميع إعدادات التطبيق والمفاتيح الحساسة بشكل آمن
 /// يتم تحميل المفاتيح من متغيرات البيئة أو Firebase Remote Config
 /// وليس من الكود المصدري مباشرة
@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 /// فئة تكوين التطبيق الرئيسية
 class AppConfig {
   // ===== API Keys (من متغيرات البيئة أو Firebase Remote Config) =====
-  
+
   /// مفتاح Gemini API
   static const String geminiApiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
@@ -41,10 +41,12 @@ class AppConfig {
   static const String footballApiBaseUrl = 'https://api.football-data.org/v4';
 
   /// نقطة نهاية TheSportDB API (بديل آمن)
-  static const String theSportDbBaseUrl = 'https://www.thesportsdb.com/api/v1/json';
+  static const String theSportDbBaseUrl =
+      'https://www.thesportsdb.com/api/v1/json';
 
   /// نقطة نهاية Gemini API
-  static const String geminiApiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+  static const String geminiApiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models';
 
   // ===== Firebase Configuration =====
 

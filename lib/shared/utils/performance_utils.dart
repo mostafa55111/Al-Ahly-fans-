@@ -8,7 +8,8 @@ class PerformanceUtils {
   }
 
   /// تخزين مؤقت للصور
-  static Future<void> precacheImages(BuildContext context, List<String> imageUrls) async {
+  static Future<void> precacheImages(
+      BuildContext context, List<String> imageUrls) async {
     for (final url in imageUrls) {
       try {
         await precacheImage(NetworkImage(url), context);

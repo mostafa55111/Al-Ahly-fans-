@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'reels_feed_theme.dart';
 
@@ -69,11 +70,21 @@ class ReelLikeActionButton extends StatelessWidget {
         ? ReelsFeedTheme.rose.withValues(alpha: 0.98)
         : Colors.white.withValues(alpha: 0.95);
     return TikTokSideActionButton(
-      icon: Icon(
-        Icons.favorite_rounded,
-        color: c,
-        size: 36,
-        shadows: const [Shadow(blurRadius: 12, color: Colors.black45)],
+      icon: TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutBack,
+        tween: Tween(begin: 1.0, end: isLiked ? 1.1 : 1.0),
+        builder: (context, scale, _) {
+          return Transform.scale(
+            scale: scale,
+            child: Icon(
+              Icons.favorite_rounded,
+              color: c,
+              size: 36,
+              shadows: const [Shadow(blurRadius: 12, color: Colors.black45)],
+            ),
+          );
+        },
       ),
       label: countLabel,
       onTap: onTap,
@@ -97,17 +108,31 @@ class TikTokSideActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           icon,
           const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: ReelsFeedTheme.sideActionCount,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: ScaleTransition(
+                scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+                child: child,
+              ),
+            ),
+            child: Text(
+              label,
+              key: ValueKey(label),
+              textAlign: TextAlign.center,
+              style: ReelsFeedTheme.sideActionCount,
+            ),
           ),
         ],
       ),
@@ -134,20 +159,23 @@ class ReelVideoBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     final thumb = thumbnailUrl?.trim() ?? '';
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        if (thumb.isNotEmpty)
-          CachedNetworkImage(
-            imageUrl: thumb,
-            fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: ReelsFeedTheme.sheetDarker),
-            errorWidget: (_, __, ___) => Container(color: ReelsFeedTheme.sheetDarker),
+    return SizedBox.expand(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (thumb.isNotEmpty)
+            CachedNetworkImage(
+              imageUrl: thumb,
+              fit: BoxFit.cover,
+            placeholder: (_, __) =>
+                Container(color: ReelsFeedTheme.sheetDarker),
+            errorWidget: (_, __, ___) =>
+                Container(color: ReelsFeedTheme.sheetDarker),
           )
         else
           Container(color: ReelsFeedTheme.sheetDarker),
         Container(
-          color: Colors.black.withValues(alpha: isError ? 0.5 : 0.38),
+          color: Colors.black.withValues(alpha: (isError ? 0.5 : 0.38)),
         ),
         if (isLoading)
           const Center(
@@ -195,10 +223,13 @@ class ReelVideoBackdrop extends StatelessWidget {
                     const SizedBox(height: 16),
                     TextButton.icon(
                       onPressed: onRetry,
-                      icon: const Icon(Icons.refresh_rounded, color: ReelsFeedTheme.rose),
+                      icon: const Icon(Icons.refresh_rounded,
+                          color: ReelsFeedTheme.rose),
                       label: const Text(
                         'إعادة المحاولة',
-                        style: TextStyle(color: ReelsFeedTheme.rose, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                            color: ReelsFeedTheme.rose,
+                            fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -206,7 +237,8 @@ class ReelVideoBackdrop extends StatelessWidget {
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

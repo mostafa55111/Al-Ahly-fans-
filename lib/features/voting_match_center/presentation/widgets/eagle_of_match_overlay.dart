@@ -26,7 +26,8 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
   final FirebaseDatabase _database = FirebaseDatabase.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Timer? _timer;
-  final VotingCloudFunctionsService _functionsService = VotingCloudFunctionsService();
+  final VotingCloudFunctionsService _functionsService =
+      VotingCloudFunctionsService();
 
   DateTime? _voteEndAt;
   Duration _timeLeft = Duration.zero;
@@ -71,26 +72,23 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
     });
   }
 
-  String _formatDuration(Duration duration) {
-    if (duration.inSeconds <= 0) return '00:00:00';
-    final h = duration.inHours.toString().padLeft(2, '0');
-    final m = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-
-  Future<void> _submitVote(String playerId, Map<String, dynamic> session) async {
+  Future<void> _submitVote(
+      String playerId, Map<String, dynamic> session) async {
     final user = _auth.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('سجل الدخول أولاً للتصويت'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('سجل الدخول أولاً للتصويت'),
+            backgroundColor: Colors.red),
       );
       return;
     }
 
     if (!_isVotingOpen) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('التصويت مغلق حالياً'), backgroundColor: Colors.orange),
+        const SnackBar(
+            content: Text('التصويت مغلق حالياً'),
+            backgroundColor: Colors.orange),
       );
       return;
     }
@@ -103,16 +101,23 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
         playerId: playerId,
         userId: user.uid,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تسجيل تصويتك بنجاح 🦅'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('تم تسجيل تصويتك بنجاح 🦅'),
+            backgroundColor: Colors.green),
       );
       return;
     } catch (e) {
-      debugPrint('Callable submitEagleOfTheMatchVote failed, fallback to DB. error=$e');
+      debugPrint(
+          'Callable submitEagleOfTheMatchVote failed, fallback to DB. error=$e');
     }
 
-    final userVotes = session['userVotes'] is Map ? Map<String, dynamic>.from(session['userVotes'] as Map) : <String, dynamic>{};
+    final userVotes = session['userVotes'] is Map
+        ? Map<String, dynamic>.from(session['userVotes'] as Map)
+        : <String, dynamic>{};
     if (userVotes[user.uid] != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('لقد قمت بالتصويت بالفعل')),
@@ -120,7 +125,9 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
       return;
     }
 
-    final playerVotes = session['playerVotes'] is Map ? Map<String, dynamic>.from(session['playerVotes'] as Map) : <String, dynamic>{};
+    final playerVotes = session['playerVotes'] is Map
+        ? Map<String, dynamic>.from(session['playerVotes'] as Map)
+        : <String, dynamic>{};
     final int current = (playerVotes[playerId] ?? 0) as int;
     playerVotes[playerId] = current + 1;
     userVotes[user.uid] = playerId;
@@ -137,7 +144,9 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تسجيل تصويتك بنجاح 🦅'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('تم تسجيل تصويتك بنجاح 🦅'),
+            backgroundColor: Colors.green),
       );
     }
   }
@@ -145,14 +154,18 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: _database.ref('man_of_match_sessions/${widget.fixtureId}').onValue,
+      stream:
+          _database.ref('man_of_match_sessions/${widget.fixtureId}').onValue,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
           return const SizedBox.shrink();
         }
 
-        final session = Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
-        final DateTime voteEndAt = DateTime.tryParse(session['voteEndAt']?.toString() ?? '') ?? DateTime.now();
+        final session =
+            Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
+        final DateTime voteEndAt =
+            DateTime.tryParse(session['voteEndAt']?.toString() ?? '') ??
+                DateTime.now();
         _voteEndAt = voteEndAt;
         _sessionStatus = session['status']?.toString() ?? 'open';
 
@@ -215,7 +228,9 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
         }
 
         final players = snapshot.data!;
-        final playerVotes = session['playerVotes'] is Map ? Map<String, dynamic>.from(session['playerVotes'] as Map) : <String, dynamic>{};
+        final playerVotes = session['playerVotes'] is Map
+            ? Map<String, dynamic>.from(session['playerVotes'] as Map)
+            : <String, dynamic>{};
         final int totalVotes = (session['totalVotes'] ?? 0) as int;
 
         return FadeInUp(
@@ -230,7 +245,8 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
                 final player = players[index];
                 final String playerId = player['id'].toString();
                 final int votes = (playerVotes[playerId] ?? 0) as int;
-                final double percent = totalVotes == 0 ? 0 : (votes / totalVotes);
+                final double percent =
+                    totalVotes == 0 ? 0 : (votes / totalVotes);
 
                 return _buildPlayerCard(player, percent, votes, session);
               },
@@ -241,10 +257,13 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
     );
   }
 
-  Widget _buildPlayerCard(Map<String, dynamic> player, double percent, int votes, Map<String, dynamic> session) {
+  Widget _buildPlayerCard(Map<String, dynamic> player, double percent,
+      int votes, Map<String, dynamic> session) {
     final String playerId = player['id'].toString();
     final user = _auth.currentUser;
-    final userVotes = session['userVotes'] is Map ? Map<String, dynamic>.from(session['userVotes'] as Map) : <String, dynamic>{};
+    final userVotes = session['userVotes'] is Map
+        ? Map<String, dynamic>.from(session['userVotes'] as Map)
+        : <String, dynamic>{};
     final bool hasVotedForThis = userVotes[user?.uid] == playerId;
 
     return GestureDetector(
@@ -261,7 +280,9 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
                 color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: hasVotedForThis ? Colors.red : Colors.white.withValues(alpha: 0.2),
+                  color: hasVotedForThis
+                      ? Colors.red
+                      : Colors.white.withValues(alpha: 0.2),
                   width: 2,
                 ),
               ),
@@ -271,14 +292,16 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (player['photo'] != null && player['photo'].toString().isNotEmpty)
+                        if (player['photo'] != null &&
+                            player['photo'].toString().isNotEmpty)
                           CachedNetworkImage(
                             imageUrl: player['photo'],
                             fit: BoxFit.cover,
                           )
                         else
-                          const Icon(Icons.person, color: Colors.white30, size: 50),
-                        
+                          const Icon(Icons.person,
+                              color: Colors.white30, size: 50),
+
                         // Percentage overlay
                         Positioned(
                           bottom: 0,
@@ -290,7 +313,10 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
                               gradient: LinearGradient(
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
-                                colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.8),
+                                  Colors.transparent
+                                ],
                               ),
                             ),
                             alignment: Alignment.bottomCenter,
@@ -300,7 +326,9 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                shadows: [Shadow(color: Colors.black, blurRadius: 5)],
+                                shadows: [
+                                  Shadow(color: Colors.black, blurRadius: 5)
+                                ],
                               ),
                             ),
                           ),
@@ -320,16 +348,20 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            shadows: [Shadow(color: Colors.black, blurRadius: 5)],
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 5)
+                            ],
                           ),
                         ),
                         const SizedBox(height: 4),
                         if (_isVotingOpen)
-                          const Icon(Icons.touch_app_outlined, color: Colors.white, size: 16)
+                          const Icon(Icons.touch_app_outlined,
+                              color: Colors.white, size: 16)
                         else
                           Text(
                             '$votes صوت',
-                            style: const TextStyle(color: Colors.white70, fontSize: 10),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 10),
                           ),
                       ],
                     ),
@@ -353,18 +385,26 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
 
     for (final root in roots) {
       final snapshot = await _database.ref(root).get();
-      if (!snapshot.exists || snapshot.value == null || snapshot.value is! Map) continue;
+      if (!snapshot.exists ||
+          snapshot.value == null ||
+          snapshot.value is! Map) {
+        continue;
+      }
 
       final Map<dynamic, dynamic> map = snapshot.value as Map<dynamic, dynamic>;
       final players = <Map<String, dynamic>>[];
       map.forEach((key, value) {
-        if (value is! Map) return;
+        if (value is! Map) {
+          return;
+        }
         final data = Map<String, dynamic>.from(value);
         final bool participated = data['participated'] == true ||
             data['played'] == true ||
             data['isParticipant'] == true ||
             data['minutes'] != null;
-        if (!participated) return;
+        if (!participated) {
+          return;
+        }
         players.add({
           'id': data['id']?.toString() ?? key.toString(),
           'name': data['name'] ?? data['playerName'] ?? 'لاعب',
@@ -373,7 +413,9 @@ class _EagleOfMatchOverlayState extends State<EagleOfMatchOverlay> {
           'number': data['number'] ?? '',
         });
       });
-      if (players.isNotEmpty) return players;
+      if (players.isNotEmpty) {
+        return players;
+      }
     }
     return [];
   }

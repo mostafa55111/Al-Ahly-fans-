@@ -20,7 +20,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     // رسالة ترحيب من المساعد الذكي
     _messages.add(
       ChatMessage(
-        text: "مرحباً! 👋 أنا مساعد الأهلي الذكي. يمكنك أن تسأليني عن:\n• معلومات اللاعبين\n• مواعيد المباريات\n• إحصائيات النادي\n• تاريخ الأهلي\n\nكيف يمكنني مساعدتك؟",
+        text:
+            "مرحباً! 👋 أنا مساعد الأهلي الذكي. يمكنك أن تسأليني عن:\n• معلومات اللاعبين\n• مواعيد المباريات\n• إحصائيات النادي\n• تاريخ الأهلي\n\nكيف يمكنني مساعدتك؟",
         isUser: false,
       ),
     );
@@ -45,7 +46,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
       });
     } catch (e) {
       setState(() {
-        _messages.add(ChatMessage(text: "حدث خطأ. يرجى المحاولة لاحقاً.", isUser: false));
+        _messages.add(
+            ChatMessage(text: "حدث خطأ. يرجى المحاولة لاحقاً.", isUser: false));
         _isLoading = false;
       });
     }
@@ -74,7 +76,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
           Positioned.fill(
             child: Opacity(
               opacity: 0.05,
-              child: Image.asset('assets/images/gold_pattern.png', repeat: ImageRepeat.repeat),
+              child: Image.asset('assets/images/gold_pattern.png',
+                  repeat: ImageRepeat.repeat),
             ),
           ),
           Column(
@@ -99,9 +102,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.3)),
                         ),
                         child: const SizedBox(
                           width: 20,
@@ -113,7 +117,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      const Text("المساعد يكتب...", style: TextStyle(color: Colors.amber, fontSize: 12)),
+                      const Text("المساعد يكتب...",
+                          style: TextStyle(color: Colors.amber, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -131,12 +136,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
-          color: message.isUser ? Colors.red.withOpacity(0.2) : Colors.amber.withOpacity(0.1),
+          color: message.isUser
+              ? Colors.red.withValues(alpha: 0.2)
+              : Colors.amber.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: message.isUser ? Colors.red.withOpacity(0.3) : Colors.amber.withOpacity(0.3),
+            color: message.isUser
+                ? Colors.red.withValues(alpha: 0.3)
+                : Colors.amber.withValues(alpha: 0.3),
           ),
         ),
         child: Text(
@@ -155,25 +165,28 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.amber.withOpacity(0.2))),
+        border:
+            Border(top: BorderSide(color: Colors.amber.withValues(alpha: 0.2))),
       ),
       child: Row(
         children: [
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
               ),
               child: TextField(
                 controller: _messageController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: "اسأل عن الأهلي...",
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintStyle:
+                      TextStyle(color: Colors.white.withValues(alpha: 0.3)),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),
@@ -188,7 +201,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 color: Colors.red,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.red.withOpacity(0.5), blurRadius: 15, spreadRadius: 2),
+                  BoxShadow(
+                      color: Colors.red.withValues(alpha: 0.5),
+                      blurRadius: 15,
+                      spreadRadius: 2),
                 ],
               ),
               child: const Icon(Icons.send, color: Colors.white, size: 20),

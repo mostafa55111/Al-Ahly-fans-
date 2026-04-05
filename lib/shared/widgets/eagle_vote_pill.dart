@@ -101,7 +101,9 @@ class _EagleVotePillState extends State<EagleVotePill> {
                   Text(
                     votingOpen ? 'يتبقى $durationText' : 'التصويت مغلق',
                     style: TextStyle(
-                      color: votingOpen ? const Color(0xFF53D769) : Colors.orangeAccent,
+                      color: votingOpen
+                          ? const Color(0xFF53D769)
+                          : Colors.orangeAccent,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                       shadows: const [
@@ -160,7 +162,8 @@ class _ActionButton extends StatelessWidget {
           backgroundColor: Colors.white.withValues(alpha: 0.06),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.20)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         child: Text(
           text,
@@ -177,4 +180,3 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
-

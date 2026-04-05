@@ -129,9 +129,6 @@ class CustomPageRoute<T> extends PageRoute<T> {
   }
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 300);
-
-  @override
   bool get opaque => false;
 
   @override
@@ -155,16 +152,16 @@ class SlidePageRoute<T> extends CustomPageRoute<T> {
     super.curve,
     super.settings,
   }) : super(
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: curve)),
-        child: child,
-      );
-    },
-  );
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(parent: animation, curve: curve)),
+              child: child,
+            );
+          },
+        );
 }
 
 /// Fade Page Route
@@ -175,13 +172,13 @@ class FadePageRoute<T> extends CustomPageRoute<T> {
     super.curve,
     super.settings,
   }) : super(
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: curve),
-        child: child,
-      );
-    },
-  );
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: curve),
+              child: child,
+            );
+          },
+        );
 }
 
 /// Scale Page Route
@@ -192,15 +189,15 @@ class ScalePageRoute<T> extends CustomPageRoute<T> {
     super.curve,
     super.settings,
   }) : super(
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return ScaleTransition(
-        scale: Tween<double>(begin: 0, end: 1).animate(
-          CurvedAnimation(parent: animation, curve: curve),
-        ),
-        child: child,
-      );
-    },
-  );
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return ScaleTransition(
+              scale: Tween<double>(begin: 0, end: 1).animate(
+                CurvedAnimation(parent: animation, curve: curve),
+              ),
+              child: child,
+            );
+          },
+        );
 }
 
 /// Rotation Page Route
@@ -211,15 +208,15 @@ class RotationPageRoute<T> extends CustomPageRoute<T> {
     super.curve,
     super.settings,
   }) : super(
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return RotationTransition(
-        turns: Tween<double>(begin: 0, end: 1).animate(
-          CurvedAnimation(parent: animation, curve: curve),
-        ),
-        child: child,
-      );
-    },
-  );
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return RotationTransition(
+              turns: Tween<double>(begin: 0, end: 1).animate(
+                CurvedAnimation(parent: animation, curve: curve),
+              ),
+              child: child,
+            );
+          },
+        );
 }
 
 /// Animated Container Helper

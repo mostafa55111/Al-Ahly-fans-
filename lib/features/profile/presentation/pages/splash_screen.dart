@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:gomhor_alahly_clean_new/main.dart';
-import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/login_screen.dart';
+import 'package:gomhor_alahly_clean_new/core/screens/main_navigation_screen.dart';
+import 'package:gomhor_alahly_clean_new/features/auth/presentation/pages/login_screen.dart'; // Corrected import
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,23 +21,41 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _startAppLogic() async {
-    await Future.delayed(const Duration(seconds: 4));
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    try {
+      debugPrint('🔄 Splash: Starting app logic...');
+      
+      await Future.delayed(const Duration(seconds: 2));
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final User? currentUser = FirebaseAuth.instance.currentUser;
-    
-    if (currentUser != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainHomeScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      debugPrint('🔄 Splash: Checking auth state...');
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        debugPrint('✅ Splash: User authenticated, navigating to MainNavigation');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+        );
+      } else {
+        debugPrint('🔐 Splash: No user authenticated, navigating to Login');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Splash: Error in app logic: $e');
+      debugPrint('❌ Splash: Stack trace: ${StackTrace.current}');
+      
+      // Navigate to login screen on error
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 
@@ -59,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-          
+
           // اللوجو كامل الشاشة
           Positioned.fill(
             child: ZoomIn(
@@ -70,22 +88,25 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: Hero(
                     tag: 'app_logo',
                     child: Image.asset(
-                      'assets/images/logo.png', 
+                      'assets/images/logo.png',
                       width: MediaQuery.of(context).size.width * 0.8,
                       height: MediaQuery.of(context).size.width * 0.8,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.sports_soccer, 
-                        size: 150, 
-                        color: Color(0xFFC5A059),
-                      ),
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('❌ Splash: Logo asset error: $error');
+                        return const Icon(
+                          Icons.sports_soccer,
+                          size: 150,
+                          color: Color(0xFFC5A059),
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          
+
           // مؤشر التحميل في الأسفل
           Positioned(
             bottom: 40,

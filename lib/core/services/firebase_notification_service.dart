@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -19,9 +20,13 @@ class FirebaseNotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      if (kDebugMode) {
+        debugPrint('User granted permission');
+      }
     } else {
-      print('User declined or has not accepted permission');
+      if (kDebugMode) {
+        debugPrint('User declined or has not accepted permission');
+      }
     }
 
     // 2. Local Notifications Setup
@@ -33,7 +38,9 @@ class FirebaseNotificationService {
 
     // 3. Foreground Message Handling
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
+      if (kDebugMode) {
+        debugPrint('Got a message whilst in the foreground!');
+      }
       _showNotification(message);
     });
 
@@ -67,5 +74,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background,
   // such as Firestore, make sure you call `initializeApp` before using them.
   // await Firebase.initializeApp();
-  print("Handling a background message: ${message.messageId}");
+  if (kDebugMode) {
+    debugPrint("Handling a background message: ${message.messageId}");
+  }
 }

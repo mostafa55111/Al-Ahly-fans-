@@ -25,7 +25,8 @@ class Badge {
       icon: json['icon'] ?? '🏆',
       color: json['color'] ?? '#FF0000',
       requiredPoints: json['requiredPoints'] ?? 0,
-      earnedDate: DateTime.parse(json['earnedDate'] ?? DateTime.now().toIso8601String()),
+      earnedDate: DateTime.parse(
+          json['earnedDate'] ?? DateTime.now().toIso8601String()),
     );
   }
 

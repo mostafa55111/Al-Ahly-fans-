@@ -34,7 +34,8 @@ dependencies:
   # --- Icons & Fonts ---
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^10.8.0
-  google_fonts: ^6.2.1
+  google_fonts: ^6.1.0
+  google_sign_in: ^6.2.11
 
   # --- State Management & Logic ---
   provider: ^6.1.1

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// ملف إدارة المتغيرات البيئية (Environment Configuration)
 /// يتم استخدام هذا الملف لتخزين جميع المفاتيح والإعدادات الحساسة
 class EnvConfig {
@@ -92,15 +94,15 @@ class EnvConfig {
 
   /// طباعة الإعدادات (للاستخدام في التطوير فقط)
   static void printConfig() {
-    if (isDevelopment()) {
-      print('=== App Configuration ===');
-      print('App Name: $appName');
-      print('App Version: $appVersion');
-      print('Environment: $environment');
-      print('AI Features: $enableAiFeatures');
-      print('Voice Rooms: $enableVoiceRooms');
-      print('Live Streaming: $enableLiveStreaming');
-      print('Social Commerce: $enableSocialCommerce');
+    if (kDebugMode) {
+      debugPrint('=== App Configuration ===');
+      debugPrint('App Name: $appName');
+      debugPrint('App Version: $appVersion');
+      debugPrint('Environment: $environment');
+      debugPrint('AI Features: $enableAiFeatures');
+      debugPrint('Voice Rooms: $enableVoiceRooms');
+      debugPrint('Live Streaming: $enableLiveStreaming');
+      debugPrint('Social Commerce: $enableSocialCommerce');
     }
   }
 }

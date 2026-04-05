@@ -2,7 +2,8 @@
 class ApiConstants {
   // Firebase
   static const String firebaseProjectId = 'ahly-fans-app';
-  static const String firebaseDatabaseUrl = 'https://ahly-fans-app.firebaseio.com';
+  static const String firebaseDatabaseUrl =
+      'https://ahly-fans-app.firebaseio.com';
   static const String firebaseStorageBucket = 'ahly-fans-app.appspot.com';
 
   // Endpoints

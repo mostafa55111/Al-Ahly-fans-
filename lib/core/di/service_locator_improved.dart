@@ -1,5 +1,5 @@
 /// نظام حقن الاعتماديات المحسّن
-/// 
+///
 /// يستخدم هذا الملف نمط Service Locator لإدارة الاعتماديات
 /// مما يسمح بفصل الكود وسهولة الاختبار
 library;
@@ -8,18 +8,29 @@ import 'package:get_it/get_it.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+// import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/data/datasources/video_remote_data_source.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/data/repositories/video_repository_impl.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/domain/repositories/video_repository.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/presentation/bloc/reels_bloc.dart';
+import 'package:gomhor_alahly_clean_new/features/matches/data/datasources/best_player_remote_data_source.dart';
+import 'package:gomhor_alahly_clean_new/features/matches/presentation/bloc/matches_bloc.dart';
+import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
+
 
 /// الحصول على نسخة من Service Locator
 final getIt = GetIt.instance;
 
 /// إعداد حقن الاعتماديات
 Future<void> setupServiceLocator() async {
-  // ===== Firebase Services =====
+  // ===== Core Services =====
+
   
+  // ===== Firebase Services =====
+
   /// تسجيل Firebase Auth
   getIt.registerSingleton<FirebaseAuth>(
     FirebaseAuth.instance,
@@ -30,16 +41,17 @@ Future<void> setupServiceLocator() async {
     FirebaseDatabase.instance,
   );
 
+  /// تسجيل Cloudinary Service
+  getIt.registerSingleton<CloudinaryService>(
+    CloudinaryService(),
+  );
+
   /// تسجيل Firebase Storage
   getIt.registerSingleton<FirebaseStorage>(
     FirebaseStorage.instance,
   );
 
-  /// تسجيل Firestore
-  getIt.registerSingleton<FirebaseFirestore>(
-    FirebaseFirestore.instance,
-  );
-
+  
   // ===== Network Services =====
 
   /// تسجيل Dio (HTTP Client)
@@ -59,13 +71,41 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<SharedPreferences>(prefs);
 
   // ===== Repository Services =====
-  // يمكن إضافة Repositories هنا
+  final currentUserId = getIt<FirebaseAuth>().currentUser?.uid ?? '';
 
-  // ===== Use Case Services =====
-  // يمكن إضافة Use Cases هنا
+  /// تسجيل Cloudinary Service (temporarily disabled)
+  // getIt.registerLazySingleton<CloudinaryService>(
+  //   () => CloudinaryService(),
+  // );
+
+  /// تسجيل Reels Feature
+  getIt.registerLazySingleton<VideoRemoteDataSource>(
+    () => VideoRemoteDataSource(),
+  );
+  getIt.registerLazySingleton<VideoRepository>(
+    () => VideoRepositoryImpl(
+      remoteDataSource: getIt<VideoRemoteDataSource>(),
+      cloudinaryService: getIt<CloudinaryService>(),
+    ),
+  );
+
+  /// تسجيل Matches Feature
+  getIt.registerLazySingleton<BestPlayerRemoteDataSource>(
+    () => BestPlayerRemoteDataSource(),
+  );
+  getIt.registerFactory<MatchesBloc>(
+    () => MatchesBloc(dataSource: getIt<BestPlayerRemoteDataSource>()),
+  );
 
   // ===== BLoC Services =====
-  // يمكن إضافة BLoCs هنا
+
+  /// تسجيل BLoCs
+  getIt.registerFactory<ReelsBloc>(
+    () => ReelsBloc(videoRepository: getIt<VideoRepository>()),
+  );
+  getIt.registerFactory<MatchesBloc>(
+    () => MatchesBloc(dataSource: getIt<BestPlayerRemoteDataSource>()),
+  );
 }
 
 /// إنشاء عميل Dio محسّن
@@ -106,7 +146,7 @@ void resetServiceLocator() {
 }
 
 /// التحقق من تسجيل خدمة معينة
-bool isServiceRegistered<T>() {
+bool isServiceRegistered<T extends Object>() {
   return getIt.isRegistered<T>();
 }
 

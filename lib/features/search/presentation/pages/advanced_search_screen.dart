@@ -13,11 +13,11 @@ class AdvancedSearchScreen extends StatefulWidget {
 class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FirebaseDatabase _database = FirebaseDatabase.instance;
-  
+
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
   String _selectedCategory = 'الكل'; // الكل، المباريات، اللاعبين، الريلز
-  
+
   final List<String> _categories = ['الكل', 'المباريات', 'اللاعبين', 'الريلز'];
 
   @override
@@ -46,13 +46,15 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
       if (_selectedCategory == 'الكل' || _selectedCategory == 'المباريات') {
         final matchesSnapshot = await _database.ref('Matches').get();
         if (matchesSnapshot.exists) {
-          final matchesData = Map<String, dynamic>.from(matchesSnapshot.value as Map);
+          final matchesData =
+              Map<String, dynamic>.from(matchesSnapshot.value as Map);
           matchesData.forEach((key, value) {
             final match = Map<String, dynamic>.from(value as Map);
             final homeTeam = (match['homeTeam'] ?? '').toString().toLowerCase();
             final awayTeam = (match['awayTeam'] ?? '').toString().toLowerCase();
-            final competition = (match['competition'] ?? '').toString().toLowerCase();
-            
+            final competition =
+                (match['competition'] ?? '').toString().toLowerCase();
+
             if (homeTeam.contains(query.toLowerCase()) ||
                 awayTeam.contains(query.toLowerCase()) ||
                 competition.contains(query.toLowerCase())) {
@@ -73,12 +75,14 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
       if (_selectedCategory == 'الكل' || _selectedCategory == 'اللاعبين') {
         final playersSnapshot = await _database.ref('Players').get();
         if (playersSnapshot.exists) {
-          final playersData = Map<String, dynamic>.from(playersSnapshot.value as Map);
+          final playersData =
+              Map<String, dynamic>.from(playersSnapshot.value as Map);
           playersData.forEach((key, value) {
             final player = Map<String, dynamic>.from(value as Map);
             final name = (player['name'] ?? '').toString().toLowerCase();
-            final position = (player['position'] ?? '').toString().toLowerCase();
-            
+            final position =
+                (player['position'] ?? '').toString().toLowerCase();
+
             if (name.contains(query.toLowerCase()) ||
                 position.contains(query.toLowerCase())) {
               results.add({
@@ -98,12 +102,13 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
       if (_selectedCategory == 'الكل' || _selectedCategory == 'الريلز') {
         final reelsSnapshot = await _database.ref('Reels').get();
         if (reelsSnapshot.exists) {
-          final reelsData = Map<String, dynamic>.from(reelsSnapshot.value as Map);
+          final reelsData =
+              Map<String, dynamic>.from(reelsSnapshot.value as Map);
           reelsData.forEach((key, value) {
             final reel = Map<String, dynamic>.from(value as Map);
             final caption = (reel['caption'] ?? '').toString().toLowerCase();
             final userName = (reel['userName'] ?? '').toString().toLowerCase();
-            
+
             if (caption.contains(query.toLowerCase()) ||
                 userName.contains(query.toLowerCase())) {
               results.add({
@@ -125,11 +130,11 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
         _isSearching = false;
       });
     } catch (e) {
-      print('خطأ في البحث: $e');
+      debugPrint('خطأ في البحث: $e');
       setState(() {
         _isSearching = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('حدث خطأ في البحث: $e')),
@@ -150,7 +155,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFFD4AF37).withOpacity(0.2),
+              color: const Color(0xFFD4AF37).withAlpha(51),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -185,14 +190,16 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.favorite, size: 14, color: Color(0xFFDC143C)),
+                    const Icon(Icons.favorite,
+                        size: 14, color: Color(0xFFDC143C)),
                     const SizedBox(width: 4),
                     Text(
                       '${result['likes'] ?? 0}',
                       style: const TextStyle(fontSize: 12),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.visibility, size: 14, color: Color(0xFF0A0E27)),
+                    const Icon(Icons.visibility,
+                        size: 14, color: Color(0xFF0A0E27)),
                     const SizedBox(width: 4),
                     Text(
                       '${result['views'] ?? 0}',
@@ -206,7 +213,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFDC143C).withOpacity(0.2),
+              color: const Color(0xFFDC143C).withAlpha(51),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -230,7 +237,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   /// معالجة النقر على نتيجة البحث
   void _handleSearchResultTap(Map<String, dynamic> result) {
     final type = result['type'];
-    
+
     switch (type) {
       case 'مباراة':
         // الانتقال إلى تفاصيل المباراة
@@ -256,17 +263,16 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0E27),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'البحث المتقدم',
-          style: TextStyle(
-            color: Color(0xFFD4AF37),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(color: Colors.white),
         ),
         centerTitle: true,
       ),
@@ -274,7 +280,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
         children: [
           // شريط البحث
           Container(
-            color: const Color(0xFF0A0E27),
+            color: Theme.of(context).scaffoldBackgroundColor,
             padding: const EdgeInsets.all(16),
             child: FadeInDown(
               child: TextField(
@@ -285,10 +291,12 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                 decoration: InputDecoration(
                   hintText: 'ابحث عن مباراة أو لاعب أو ريل...',
                   hintStyle: const TextStyle(color: Color(0xFF9BA1A6)),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFD4AF37)),
+                  prefixIcon: Icon(Icons.search,
+                      color: Theme.of(context).colorScheme.primary),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, color: Color(0xFFD4AF37)),
+                          icon: Icon(Icons.clear,
+                              color: Theme.of(context).colorScheme.primary),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {
@@ -298,18 +306,21 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                         )
                       : null,
                   filled: true,
-                  fillColor: const Color(0xFF1E2022),
+                  fillColor: Theme.of(context).colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 2),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 1),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 2),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary, width: 2),
                   ),
                 ),
                 style: const TextStyle(color: Color(0xFFECEDEE)),
@@ -340,11 +351,14 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                       backgroundColor: const Color(0xFF1E2022),
                       selectedColor: const Color(0xFFDC143C),
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : const Color(0xFFD4AF37),
+                        color:
+                            isSelected ? Colors.white : const Color(0xFFD4AF37),
                         fontWeight: FontWeight.bold,
                       ),
                       side: BorderSide(
-                        color: isSelected ? const Color(0xFFDC143C) : const Color(0xFFD4AF37),
+                        color: isSelected
+                            ? const Color(0xFFDC143C)
+                            : const Color(0xFFD4AF37),
                         width: 1,
                       ),
                     ),
@@ -363,7 +377,8 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4AF37)),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFFD4AF37)),
                           ),
                           SizedBox(height: 16),
                           Text(

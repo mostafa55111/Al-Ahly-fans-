@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gomhor_alahly_clean_new/core/screens/main_navigation_screen.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:gomhor_alahly_clean_new/main.dart'; // للتوجيه إلى MainHomeScreen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MainHomeScreen()),
+          MaterialPageRoute(builder: (_) => MainNavigationScreen()),
         );
       }
     } catch (e) {
@@ -55,7 +55,9 @@ class _LoginScreenState extends State<LoginScreen> {
           Positioned.fill(
             child: Opacity(
               opacity: 0.05,
-              child: Image.asset('assets/images/gold_pattern.png', repeat: ImageRepeat.repeat, errorBuilder: (c, e, s) => Container()),
+              child: Image.asset('assets/images/gold_pattern.png',
+                  repeat: ImageRepeat.repeat,
+                  errorBuilder: (c, e, s) => Container()),
             ),
           ),
           Center(
@@ -65,24 +67,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   FadeInDown(
-                    child: Image.asset('assets/images/logo.png', width: 120, errorBuilder: (c, e, s) => const Icon(Icons.sports_soccer, size: 80, color: Colors.red)),
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage: const AssetImage('assets/images/logo.png'),
+                    ),
                   ),
                   const SizedBox(height: 30),
                   FadeInUp(
                     child: const Text(
                       "تسجيل الدخول",
-                      style: TextStyle(color: Color(0xFFC5A059), fontSize: 28, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Color(0xFFC5A059),
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 40),
                   FadeInUp(
                     delay: const Duration(milliseconds: 200),
-                    child: _buildTextField(_emailController, "البريد الإلكتروني", Icons.email_outlined, false),
+                    child: _buildTextField(_emailController,
+                        "البريد الإلكتروني", Icons.email_outlined, false),
                   ),
                   const SizedBox(height: 20),
                   FadeInUp(
                     delay: const Duration(milliseconds: 400),
-                    child: _buildTextField(_passwordController, "كلمة المرور", Icons.lock_outline, true),
+                    child: _buildTextField(_passwordController, "كلمة المرور",
+                        Icons.lock_outline, true),
                   ),
                   const SizedBox(height: 40),
                   FadeInUp(
@@ -98,13 +108,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Colors.red,
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
-                                  BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 15, spreadRadius: 2),
+                                  BoxShadow(
+                                      color: Colors.red.withValues(alpha: 0.4),
+                                      blurRadius: 15,
+                                      spreadRadius: 2),
                                 ],
                               ),
                               child: const Center(
                                 child: Text(
                                   "دخول",
-                                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
@@ -117,7 +133,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {},
                       child: const Text(
                         "ليس لديك حساب؟ سجل الآن",
-                        style: TextStyle(color: Color(0xFFC5A059), fontSize: 14),
+                        style:
+                            TextStyle(color: Color(0xFFC5A059), fontSize: 14),
                       ),
                     ),
                   ),
@@ -130,12 +147,14 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, bool isPassword) {
+  Widget _buildTextField(TextEditingController controller, String hint,
+      IconData icon, bool isPassword) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC5A059).withOpacity(0.3)),
+        border:
+            Border.all(color: const Color(0xFFC5A059).withValues(alpha: 0.3)),
       ),
       child: TextField(
         controller: controller,
@@ -143,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
           prefixIcon: Icon(icon, color: const Color(0xFFC5A059)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15),

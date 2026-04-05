@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
-/// خدمة تحسين الأداء (Performance Service)
+/// خدمة تحسين الأداء (Performance Optimization Service)
 /// تتعامل مع تحسين الصور والتخزين المؤقت وتقليل استهلاك الموارد
 
 class PerformanceService {
@@ -61,7 +62,7 @@ class PerformanceService {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.red.withOpacity(0.8),
+              color: Colors.red.withAlpha((0.8 * 255).toInt()),
             ),
             padding: const EdgeInsets.all(12),
             child: const Icon(
@@ -141,6 +142,3 @@ class ConnectivityHelper {
     return 'wifi';
   }
 }
-
-// استيراد VisibilityDetector من المكتبة
-import 'package:visibility_detector/visibility_detector.dart';

@@ -18,7 +18,9 @@ class AhlyAnimations {
         duration: const Duration(milliseconds: 300),
         child: Container(
           decoration: BoxDecoration(
-            color: isLiked ? Colors.red.withOpacity(0.1) : Colors.transparent,
+            color: isLiked
+                ? Colors.red.withAlpha((0.1 * 255).toInt())
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(50),
           ),
           padding: const EdgeInsets.all(8),
@@ -79,9 +81,9 @@ class AhlyAnimations {
         color: Colors.grey[300],
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Pulse(
-        duration: Duration(milliseconds: 1500),
-        child: SizedBox.expand(),
+      child: Pulse(
+        duration: const Duration(milliseconds: 1500),
+        child: const SizedBox.expand(),
       ),
     );
   }
@@ -94,16 +96,13 @@ class AhlyAnimations {
   }) {
     return GestureDetector(
       onTap: onPressed,
-      child: ScaleTransition(
-        scale: const AlwaysStoppedAnimation(1.0),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onPressed,
-            splashColor: pressColor ?? Colors.red.withOpacity(0.3),
-            highlightColor: Colors.red.withOpacity(0.1),
-            child: child,
-          ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          splashColor: pressColor ?? Colors.red.withAlpha((0.3 * 255).toInt()),
+          highlightColor: Colors.red.withAlpha((0.1 * 255).toInt()),
+          child: child,
         ),
       ),
     );
@@ -126,7 +125,7 @@ class AhlyAnimations {
     required Widget child,
     Duration duration = const Duration(seconds: 2),
   }) {
-    return RotateIn(
+    return Spin(
       duration: duration,
       child: child,
     );
@@ -139,9 +138,9 @@ class AhlyAnimations {
   }) {
     return trigger
         ? Jello(
-          duration: const Duration(milliseconds: 500),
-          child: child,
-        )
+            duration: const Duration(milliseconds: 500),
+            child: child,
+          )
         : child;
   }
 

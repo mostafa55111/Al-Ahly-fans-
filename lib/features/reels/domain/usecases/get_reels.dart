@@ -1,12 +1,19 @@
-import 'package:gomhor_alahly_clean_new/features/reels/data/models/video_model.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/domain/entities/video_entity.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/domain/repositories/video_repository.dart';
 
 class GetReels {
-  final VideoRepository repository;
+  final VideoRepository _repository;
 
-  GetReels(this.repository);
+  GetReels(this._repository);
 
-  Future<List<VideoModel>> call() async {
-    return await repository.getReels();
+  /// Fetch reels with pagination support
+  Future<List<VideoEntity>> call({
+    String? lastVideoId,
+    int limit = 10,
+  }) async {
+    return await _repository.getReels(
+      lastVideoId: lastVideoId,
+      limit: limit,
+    );
   }
 }

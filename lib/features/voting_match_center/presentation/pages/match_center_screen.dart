@@ -1,34 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:gomhor_alahly_clean_new/core/services/sports_api_service.dart';
 import 'package:gomhor_alahly_clean_new/features/voting_match_center/presentation/widgets/eagle_of_match_overlay.dart';
+import 'package:gomhor_alahly_clean_new/features/live_match_updates/data/models/match_model.dart';
+import 'package:gomhor_alahly_clean_new/features/live_match_updates/domain/entities/match_entity.dart';
 
 class MatchCenterScreen extends StatefulWidget {
-  const MatchCenterScreen({super.key, this.initialTabIndex = 0});
-
-  final int initialTabIndex;
+  const MatchCenterScreen({super.key});
 
   @override
   State<MatchCenterScreen> createState() => _MatchCenterScreenState();
 }
 
-class _MatchCenterScreenState extends State<MatchCenterScreen> with SingleTickerProviderStateMixin {
+class _MatchCenterScreenState extends State<MatchCenterScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final SportsApiService _sportsApi = SportsApiService();
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 4,
-      vsync: this,
-      initialIndex: widget.initialTabIndex.clamp(0, 3),
-    );
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -40,25 +35,29 @@ class _MatchCenterScreenState extends State<MatchCenterScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          "مركز المباريات",
-          style: TextStyle(color: Color(0xFFC5A059), fontWeight: FontWeight.bold),
+          'مركز المباريات',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
         ),
-        centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.red,
-          labelColor: Colors.white,
           isScrollable: true,
+          indicatorColor: Theme.of(context).colorScheme.primary,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Colors.white70,
           tabs: const [
-            Tab(text: "المباريات"),
-            Tab(text: "النتائج"),
-            Tab(text: "الترتيب"),
-            Tab(text: "التصويت"),
+            Tab(text: 'المباريات القادمة'),
+            Tab(text: 'النتائج الأخيرة'),
+            Tab(text: 'تصويت اللاعبين'),
+            Tab(text: 'نسر المباراة'),
           ],
         ),
       ),
@@ -75,53 +74,123 @@ class _MatchCenterScreenState extends State<MatchCenterScreen> with SingleTicker
   }
 
   Widget _buildMatchesTab({required bool isNext}) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: isNext ? _sportsApi.getNextMatches() : _sportsApi.getLastMatches(),
+    return FutureBuilder<List<MatchModel>>(
+      future:
+          isNext ? _sportsApi.getNextMatches() : _sportsApi.getLastMatches(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.red));
+          return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary));
         }
 
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('لا توجد بيانات حالياً', style: TextStyle(color: Colors.white54)));
+        final matches = (snapshot.data ?? []).where(_isAlAhlyMatch).toList();
+        if (snapshot.hasError || matches.isEmpty) {
+          return const Center(
+            child: Text('لا توجد مباريات للأهلي حالياً',
+                style: TextStyle(color: Colors.white54)),
+          );
         }
 
         return ListView.builder(
           padding: const EdgeInsets.all(15),
-          itemCount: snapshot.data!.length,
+          itemCount: matches.length,
           itemBuilder: (context, index) {
-            final match = snapshot.data![index];
+            final match = matches[index];
             return FadeInUp(
               child: Card(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Theme.of(context).colorScheme.surface,
                 margin: const EdgeInsets.only(bottom: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  side: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.12),
+                      width: 1),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(15),
                   child: Column(
                     children: [
-                      Text(match['competition'] ?? 'دوري', style: const TextStyle(color: Color(0xFFC5A059), fontSize: 12)),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildTeamInfo(match['homeTeam'], match['homeLogo']),
-                          Column(
-                            children: [
-                              if (!isNext)
-                                Text("${match['homeScore']} - ${match['awayScore']}", 
-                                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))
-                              else
-                                const Text("VS", style: TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 5),
-                              Text(_sportsApi.getMatchStatus(match['status']), style: const TextStyle(color: Colors.white54, fontSize: 10)),
-                            ],
-                          ),
-                          _buildTeamInfo(match['awayTeam'], match['awayLogo']),
-                        ],
+                      Text(
+                        match.tournament,
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 12),
                       ),
                       const SizedBox(height: 10),
-                      Text(_sportsApi.formatISODateTime(match['utcDate']), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: match.homeTeamLogo,
+                                  height: 50,
+                                  width: 50,
+                                  fit: BoxFit.contain,
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  match.homeTeam,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                isNext
+                                    ? _sportsApi
+                                        .getMatchStatusDisplay(match.status)
+                                    : "${match.homeScore} - ${match.awayScore}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                "${match.startTime.day}/${match.startTime.month}/${match.startTime.year}",
+                                style: const TextStyle(
+                                    color: Colors.white54, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: match.awayTeamLogo,
+                                  height: 50,
+                                  width: 50,
+                                  fit: BoxFit.contain,
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  match.awayTeam,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -133,98 +202,260 @@ class _MatchCenterScreenState extends State<MatchCenterScreen> with SingleTicker
     );
   }
 
-  Widget _buildTeamInfo(String? name, String? logo) {
-    return Expanded(
-      child: Column(
-        children: [
-          CachedNetworkImage(
-            imageUrl: logo ?? '',
-            width: 50,
-            placeholder: (context, url) => const Icon(Icons.sports_soccer, color: Colors.white24),
-            errorWidget: (context, url, error) => const Icon(Icons.sports_soccer, color: Colors.white24),
+  Widget _buildStandingsTab() {
+    return FutureBuilder<List<MatchModel>>(
+      future: _sportsApi.getLastMatches(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFD4AF37)));
+        }
+
+        final matches = (snapshot.data ?? []).where(_isAlAhlyMatch).toList();
+        if (snapshot.hasError || matches.isEmpty) {
+          return const Center(
+            child: Text('لا توجد مباريات منتهية للأهلي حالياً',
+                style: TextStyle(color: Colors.white54)),
+          );
+        }
+
+        final latestMatch = _findLatestFinishedMatch(matches);
+        if (latestMatch == null) {
+          return const Center(
+            child: Text('لا توجد مباراة منتهية حالياً',
+                style: TextStyle(color: Colors.white54)),
+          );
+        }
+
+        return _buildPlayerVotingCards(latestMatch);
+      },
+    );
+  }
+
+  /// بناء كروت اللاعبين للتصويت
+  Widget _buildPlayerVotingCards(MatchModel match) {
+    final players = match.homeTeamLineup
+        .where((player) => player.name.isNotEmpty && player.number > 0)
+        .toList();
+
+    if (players.isEmpty) {
+      return const Center(
+        child: Text('لا توجد بيانات اللاعبين متاحة',
+            style: TextStyle(color: Colors.white54)),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'تصويت نسر المباراة - ${match.homeTeam} vs ${match.awayTeam}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 5),
-          Text(name ?? 'فريق', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+        ),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: players.length,
+            itemBuilder: (context, index) {
+              final player = players[index];
+              return _buildPlayerCard(player, match.id);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// بناء كارت اللاعب للتصويت
+  Widget _buildPlayerCard(Player player, String matchId) {
+    return GestureDetector(
+      onTap: () => _voteForPlayer(player, matchId),
+      child: Card(
+        color: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              width: 1),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                backgroundImage: player.imageUrl.isNotEmpty
+                    ? NetworkImage(player.imageUrl)
+                    : null,
+                child: player.imageUrl.isEmpty
+                    ? Text(
+                        '${player.number}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                player.name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                player.position,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10,
+                ),
+              ),
+              if (player.isCaptain)
+                const Icon(Icons.star, color: Color(0xFFD4AF37), size: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// التصويت للاعب
+  void _voteForPlayer(Player player, String matchId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('التصويت لنسر المباراة',
+            style: TextStyle(color: Colors.white)),
+        content: Text(
+          'هل تريد التصويت للاعب ${player.name} كنسر المباراة؟',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _submitVote(player, matchId);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('تأكيد التصويت'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStandingsTab() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _sportsApi.getLeagueStandings(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.red));
-        }
+  /// إرسال التصويت
+  void _submitVote(Player player, String matchId) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب تسجيل الدخول للتصويت')),
+      );
+      return;
+    }
 
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('لا توجد بيانات للترتيب حالياً', style: TextStyle(color: Colors.white54)));
-        }
+    final voteRef = FirebaseDatabase.instance.ref('votes/$matchId/$userId');
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(10),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final team = snapshot.data![index];
-            final isAhly = team['team']['id'].toString() == '1035';
-            return Container(
-              color: isAhly ? Colors.red.withValues(alpha: 0.1) : Colors.transparent,
-              child: ListTile(
-                leading: Text("${team['rank']}", style: TextStyle(color: isAhly ? Colors.red : Colors.white)),
-                title: Row(
-                  children: [
-                    CachedNetworkImage(imageUrl: team['team']['logo'], width: 25),
-                    const SizedBox(width: 10),
-                    Text(team['team']['name'], style: TextStyle(color: isAhly ? Colors.red : Colors.white, fontSize: 14)),
-                  ],
-                ),
-                trailing: Text("${team['points']} نقطة", style: const TextStyle(color: Color(0xFFC5A059), fontWeight: FontWeight.bold)),
-              ),
-            );
-          },
-        );
-      },
-    );
+    voteRef.set({
+      'playerId': player.id,
+      'playerName': player.name,
+      'playerNumber': player.number,
+      'votedAt': DateTime.now().toIso8601String(),
+    }).then((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم التصويت للاعب ${player.name} بنجاح'),
+          backgroundColor: const Color(0xFFD4AF37),
+        ),
+      );
+    }).catchError((error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في التصويت: $error')),
+      );
+    });
   }
 
   Widget _buildVotingTab() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
+    return FutureBuilder<List<MatchModel>>(
       future: _sportsApi.getLastMatches(),
-      builder: (context, matchesSnapshot) {
-        if (matchesSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.red));
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+              child: CircularProgressIndicator(color: Colors.red));
         }
 
-        if (matchesSnapshot.hasError || !matchesSnapshot.hasData || matchesSnapshot.data!.isEmpty) {
+        final matches = (snapshot.data ?? []).where(_isAlAhlyMatch).toList();
+        if (snapshot.hasError || matches.isEmpty) {
           return const Center(
-            child: Text('تعذر تحميل بيانات التصويت حالياً', style: TextStyle(color: Colors.white54)),
+            child: Text('تعذر تحميل بيانات تصويت الأهلي حالياً',
+                style: TextStyle(color: Colors.white54)),
           );
         }
 
-        final Map<String, dynamic>? latestFinished = _findLatestFinishedMatch(matchesSnapshot.data!);
+        final latestFinished = _findLatestFinishedMatch(matches);
         if (latestFinished == null) {
           return const Center(
-            child: Text('لا توجد مباراة منتهية حالياً للتصويت', style: TextStyle(color: Colors.white54)),
+            child: Text('لا توجد مباراة منتهية حالياً للتصويت',
+                style: TextStyle(color: Colors.white54)),
           );
         }
 
-        final String fixtureId = latestFinished['id'].toString();
+        final String fixtureId = latestFinished.id;
         final DateTime finishedAt = _estimateMatchEnd(latestFinished);
         final DateTime voteEndAt = finishedAt.add(const Duration(hours: 1));
 
         return FutureBuilder<void>(
-          future: _ensureVotingSession(fixtureId: fixtureId, match: latestFinished, finishedAt: finishedAt, voteEndAt: voteEndAt),
+          future: _ensureVotingSession(
+            fixtureId: fixtureId,
+            match: latestFinished,
+            finishedAt: finishedAt,
+            voteEndAt: voteEndAt,
+          ),
           builder: (context, _) {
             return Stack(
               fit: StackFit.expand,
               children: [
-                // Background image to simulate video feel
                 CachedNetworkImage(
-                  imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200',
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(color: Colors.black),
-                  errorWidget: (context, url, error) => Container(color: Colors.black),
+                  errorWidget: (context, url, error) =>
+                      Container(color: Colors.black),
                 ),
                 EagleOfMatchOverlay(fixtureId: fixtureId),
               ],
@@ -235,60 +466,55 @@ class _MatchCenterScreenState extends State<MatchCenterScreen> with SingleTicker
     );
   }
 
-  int _toInt(dynamic value) {
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
+  bool _isAlAhlyMatch(MatchModel match) {
+    final home = match.homeTeam.toLowerCase();
+    final away = match.awayTeam.toLowerCase();
+    return home.contains('al ahly') ||
+        away.contains('al ahly') ||
+        home.contains('الأهلي') ||
+        away.contains('الأهلي');
   }
 
-  Map<String, dynamic>? _findLatestFinishedMatch(List<Map<String, dynamic>> matches) {
+  MatchModel? _findLatestFinishedMatch(List<MatchModel> matches) {
     for (final match in matches) {
-      final String shortStatus = (match['statusShort'] ?? '').toString().toUpperCase();
-      final String longStatus = (match['status'] ?? '').toString().toUpperCase();
-      final bool isFinished = shortStatus == 'FT' || shortStatus == 'AET' || shortStatus == 'PEN' || longStatus.contains('FINISHED');
-      if (isFinished) return match;
+      if (match.status == MatchStatus.finished || match.isFinished) {
+        return match;
+      }
     }
     return null;
   }
 
-  /// تقدير وقت صافرة النهاية لتفعيل التصويت لمدة ساعة بعدها فقط.
-  DateTime _estimateMatchEnd(Map<String, dynamic> match) {
-    final String utcDate = match['utcDate']?.toString() ?? '';
-    final DateTime kickoff = DateTime.tryParse(utcDate)?.toLocal() ?? DateTime.now();
-    final int elapsed = _toInt(match['elapsed']);
-    final String short = (match['statusShort'] ?? '').toString().toUpperCase();
-    final bool finished = short == 'FT' || short == 'AET' || short == 'PEN';
-
-    if (finished) {
-      if (elapsed > 0) return kickoff.add(Duration(minutes: elapsed));
-      return kickoff.add(const Duration(minutes: 105));
-    }
-    if (elapsed > 0) return kickoff.add(Duration(minutes: elapsed));
-    return kickoff.add(const Duration(minutes: 120));
+  DateTime _estimateMatchEnd(MatchModel match) {
+    final DateTime kickoff = match.startTime;
+    // تقدير وقت انتهاء المباراة بـ 105 دقيقة بعد الركلة الأولى
+    return kickoff.add(const Duration(minutes: 105));
   }
 
   Future<void> _ensureVotingSession({
     required String fixtureId,
-    required Map<String, dynamic> match,
+    required MatchModel match,
     required DateTime finishedAt,
     required DateTime voteEndAt,
   }) async {
-    final ref = _database.ref('man_of_match_sessions/$fixtureId');
-    final snapshot = await ref.get();
-    if (snapshot.exists) return;
+    final sessionRef = FirebaseDatabase.instance.ref("votings/$fixtureId");
+    final snapshot = await sessionRef.get();
 
-    await ref.set({
-      'fixtureId': fixtureId,
-      'homeTeam': match['homeTeam'],
-      'awayTeam': match['awayTeam'],
-      'finishedAt': finishedAt.toIso8601String(),
-      'voteStartAt': finishedAt.toIso8601String(),
-      'voteEndAt': voteEndAt.toIso8601String(),
-      'status': 'open',
-      'totalVotes': 0,
-      'playerVotes': {},
-      'userVotes': {},
-      'createdAt': DateTime.now().toIso8601String(),
-    });
+    if (!snapshot.exists) {
+      await sessionRef.set({
+        'matchId': fixtureId,
+        'homeTeam': match.homeTeam,
+        'awayTeam': match.awayTeam,
+        'homeTeamLogo': match.homeTeamLogo,
+        'awayTeamLogo': match.awayTeamLogo,
+        'finishedAt': finishedAt.toIso8601String(),
+        'voteEndAt': voteEndAt.toIso8601String(),
+        'status': 'open',
+      });
+    } else {
+      final now = DateTime.now();
+      if (now.isAfter(voteEndAt)) {
+        await sessionRef.update({'status': 'closed'});
+      }
+    }
   }
 }

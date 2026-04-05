@@ -247,7 +247,7 @@ class AppTheme {
           color: AppColors.error,
         ),
       ),
-        cardTheme: CardThemeData(
+      cardTheme: CardThemeData(
         color: AppColors.darkBlack,
         elevation: 4,
         shape: RoundedRectangleBorder(

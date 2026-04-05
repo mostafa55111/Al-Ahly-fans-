@@ -45,7 +45,10 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.amber.withOpacity(0.3), width: 0.5)),
+          border: Border(
+              top: BorderSide(
+                  color: Colors.amber.withAlpha((0.3 * 255).toInt()),
+                  width: 0.5)),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
@@ -53,10 +56,12 @@ class _MainNavigationState extends State<MainNavigation> {
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.black,
           selectedItemColor: Colors.red, // إضاءة حمراء للزر النشط
-          unselectedItemColor: Colors.amber.withOpacity(0.6), // ذهبي مطفي لغير النشط
+          unselectedItemColor: Colors.amber
+              .withAlpha((0.6 * 255).toInt()), // ذهبي مطفي لغير النشط
           showSelectedLabels: true,
           showUnselectedLabels: true,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          selectedLabelStyle:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
             _buildNavItem(Icons.video_library_rounded, 'الريلز', 0),
@@ -70,23 +75,26 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
+  BottomNavigationBarItem _buildNavItem(
+      IconData icon, String label, int index) {
     bool isSelected = _selectedIndex == index;
     return BottomNavigationBarItem(
       icon: RedGlowEffect(
         isActive: isSelected,
         child: Container(
           padding: const EdgeInsets.all(8),
-          decoration: isSelected ? BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.red.withOpacity(0.5),
-                blurRadius: 15,
-                spreadRadius: 2,
-              )
-            ],
-          ) : null,
+          decoration: isSelected
+              ? BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withAlpha((0.5 * 255).toInt()),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    )
+                  ],
+                )
+              : null,
           child: Icon(icon),
         ),
       ),

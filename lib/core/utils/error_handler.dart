@@ -1,8 +1,9 @@
 /// معالج الأخطاء المحسّن
-/// 
+///
 /// يوفر هذا الملف طرقاً موحدة لمعالجة جميع أنواع الأخطاء في التطبيق
 library;
 
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gomhor_alahly_clean_new/core/exceptions/app_exceptions.dart';

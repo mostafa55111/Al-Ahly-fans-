@@ -4,8 +4,10 @@ import 'package:gomhor_alahly_clean_new/features/voting_match_center/data/models
 abstract class MatchRemoteDataSource {
   Future<List<MatchModel>> getMatchSchedule();
   Future<MatchModel> getMatchDetails(String matchId);
-  Future<void> submitEagleOfTheMatchVote(String matchId, String playerId, String userId);
-  Future<void> submitPlayerRating(String matchId, String playerId, String userId, int rating);
+  Future<void> submitEagleOfTheMatchVote(
+      String matchId, String playerId, String userId);
+  Future<void> submitPlayerRating(
+      String matchId, String playerId, String userId, int rating);
   Future<void> createMatch(MatchModel match);
   Future<void> updateMatch(MatchModel match);
   Future<void> deleteMatch(String matchId);
@@ -23,8 +25,18 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
       final List<MatchModel> matches = [];
       final data = snapshot.value as Map<dynamic, dynamic>;
       data.forEach((key, value) {
-        final matchData = value as Map<dynamic, dynamic>;
-        matches.add(MatchModel.fromMap(matchData, key.toString()));
+        final m = value as Map<dynamic, dynamic>;
+        final tid = m['teamId'] ?? m['homeTeamId'] ?? m['awayTeamId'];
+        final isAhlyId = tid != null && tid.toString() == '1029';
+        final ht = m['homeTeam']?.toString().toLowerCase() ?? '';
+        final at = m['awayTeam']?.toString().toLowerCase() ?? '';
+        final isAhlyName = ht.contains('ahly') ||
+            at.contains('ahly') ||
+            m['homeTeam'] == 'الأهلي' ||
+            m['awayTeam'] == 'الأهلي';
+        if (isAhlyId || isAhlyName) {
+          matches.add(MatchModel.fromMap(m, key.toString()));
+        }
       });
       return matches;
     } else {
@@ -43,13 +55,21 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   }
 
   @override
-  Future<void> submitEagleOfTheMatchVote(String matchId, String playerId, String userId) async {
-    await _database.ref().child('matches/$matchId/eagleOfTheMatchVotes/$userId').set(playerId);
+  Future<void> submitEagleOfTheMatchVote(
+      String matchId, String playerId, String userId) async {
+    await _database
+        .ref()
+        .child('matches/$matchId/eagleOfTheMatchVotes/$userId')
+        .set(playerId);
   }
 
   @override
-  Future<void> submitPlayerRating(String matchId, String playerId, String userId, int rating) async {
-    await _database.ref().child('matches/$matchId/playerRatings/$playerId/$userId').set(rating);
+  Future<void> submitPlayerRating(
+      String matchId, String playerId, String userId, int rating) async {
+    await _database
+        .ref()
+        .child('matches/$matchId/playerRatings/$playerId/$userId')
+        .set(rating);
   }
 
   @override

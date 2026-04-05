@@ -1,25 +1,28 @@
+import 'dart:io';
 part of 'reels_bloc.dart';
 
 abstract class ReelsEvent {
   const ReelsEvent();
 }
 
-class GetReelsEvent extends ReelsEvent {
-  const GetReelsEvent();
+class LoadReelsEvent extends ReelsEvent {
+  const LoadReelsEvent();
 }
 
-class AddLikeEvent extends ReelsEvent {
-  final String videoId;
-  final String userId;
-
-  const AddLikeEvent({required this.videoId, required this.userId});
+class LoadMoreReelsEvent extends ReelsEvent {
+  const LoadMoreReelsEvent();
 }
 
-class RemoveLikeEvent extends ReelsEvent {
+class ToggleLikeEvent extends ReelsEvent {
   final String videoId;
   final String userId;
+  final bool isLiked;
 
-  const RemoveLikeEvent({required this.videoId, required this.userId});
+  const ToggleLikeEvent({
+    required this.videoId,
+    required this.userId,
+    required this.isLiked,
+  });
 }
 
 class AddCommentEvent extends ReelsEvent {
@@ -39,4 +42,12 @@ class ShareVideoEvent extends ReelsEvent {
   final String userId;
 
   const ShareVideoEvent({required this.videoId, required this.userId});
+}
+
+class UploadVideoEvent extends ReelsEvent {
+  final File file;
+
+  const UploadVideoEvent({
+    required this.file,
+  });
 }

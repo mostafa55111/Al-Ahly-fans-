@@ -79,8 +79,7 @@ class AppConstants {
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
   static const String usernamePattern = r'^[a-zA-Z0-9_]{3,30}$';
   static const String phonePattern = r'^[0-9]{10,15}$';
-  static const String urlPattern =
-      r'^https?://[^\s/$.?#].[^\s]*$';
+  static const String urlPattern = r'^https?://[^\s/$.?#].[^\s]*$';
   static const String hashtagPattern = r'#[a-zA-Z0-9_]+';
   static const String mentionPattern = r'@[a-zA-Z0-9_]+';
 

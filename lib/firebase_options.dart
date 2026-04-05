@@ -17,29 +17,17 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -60,4 +48,51 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://gomhor-al-ahly-default-rtdb.firebaseio.com',
     storageBucket: 'gomhor-al-ahly.firebasestorage.app',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAlI3SU_iIRFIzvyxfbwFvcbls7QggJp7I',
+    appId: '1:725028676186:web:af6bd8363367fa1ef62e63',
+    messagingSenderId: '725028676186',
+    projectId: 'gomhor-al-ahly',
+    authDomain: 'gomhor-al-ahly.firebaseapp.com',
+    databaseURL: 'https://gomhor-al-ahly-default-rtdb.firebaseio.com',
+    storageBucket: 'gomhor-al-ahly.firebasestorage.app',
+    measurementId: 'G-L321EYVT1L',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyC6MZ69ajS44noRx3lRgskzA_tkEfj--WY',
+    appId: '1:725028676186:ios:d6637ab1e913fc23f62e63',
+    messagingSenderId: '725028676186',
+    projectId: 'gomhor-al-ahly',
+    databaseURL: 'https://gomhor-al-ahly-default-rtdb.firebaseio.com',
+    storageBucket: 'gomhor-al-ahly.firebasestorage.app',
+    androidClientId: '725028676186-n6fehe7icj9l6bvrr6c1sk70a588jcl7.apps.googleusercontent.com',
+    iosClientId: '725028676186-b2avog6m2e2nsj2e9vp5kdsta7n8kutc.apps.googleusercontent.com',
+    iosBundleId: 'com.example.gomhorAlahlyCleanNew',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyC6MZ69ajS44noRx3lRgskzA_tkEfj--WY',
+    appId: '1:725028676186:ios:d6637ab1e913fc23f62e63',
+    messagingSenderId: '725028676186',
+    projectId: 'gomhor-al-ahly',
+    databaseURL: 'https://gomhor-al-ahly-default-rtdb.firebaseio.com',
+    storageBucket: 'gomhor-al-ahly.firebasestorage.app',
+    androidClientId: '725028676186-n6fehe7icj9l6bvrr6c1sk70a588jcl7.apps.googleusercontent.com',
+    iosClientId: '725028676186-b2avog6m2e2nsj2e9vp5kdsta7n8kutc.apps.googleusercontent.com',
+    iosBundleId: 'com.example.gomhorAlahlyCleanNew',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAlI3SU_iIRFIzvyxfbwFvcbls7QggJp7I',
+    appId: '1:725028676186:web:83d57e6120e404fef62e63',
+    messagingSenderId: '725028676186',
+    projectId: 'gomhor-al-ahly',
+    authDomain: 'gomhor-al-ahly.firebaseapp.com',
+    databaseURL: 'https://gomhor-al-ahly-default-rtdb.firebaseio.com',
+    storageBucket: 'gomhor-al-ahly.firebasestorage.app',
+    measurementId: 'G-XE6L0B63F3',
+  );
+
 }

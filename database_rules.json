@@ -1,0 +1,74 @@
+{
+  "rules": {
+    "reels": {
+      ".indexOn": ["timestamp", "createdAt"],
+      ".read": true,
+      ".write": true,
+      "$reelId": {
+        ".read": true,
+        ".write": true,
+        ".validate": {
+          "videoUrl": {
+            ".type": "string",
+            ".regex": "^https?://.*"
+          },
+          "caption": {
+            ".type": "string",
+            ".maxLength": 500
+          },
+          "userId": {
+            ".type": "string"
+          },
+          "userName": {
+            ".type": "string"
+          },
+          "likes": {
+            ".type": "number"
+          },
+          "comments": {
+            ".type": "number"
+          },
+          "shares": {
+            ".type": "number"
+          },
+          "timestamp": {
+            ".type": "number"
+          }
+        }
+      }
+    },
+    "best_player": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["name", "position"],
+      "$playerId": {
+        ".read": true,
+        ".write": true,
+        ".validate": {
+          "name": {
+            ".type": "string",
+            ".maxLength": 100
+          },
+          "position": {
+            ".type": "string",
+            ".maxLength": 50
+          },
+          "imageUrl": {
+            ".type": "string",
+            ".regex": "^https?://.*"
+          },
+          "goals": {
+            ".type": "number"
+          },
+          "assists": {
+            ".type": "number"
+          },
+          "team": {
+            ".type": "string",
+            ".maxLength": 100
+          }
+        }
+      }
+    }
+  }
+}

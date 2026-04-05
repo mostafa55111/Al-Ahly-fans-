@@ -8,14 +8,16 @@ part 'voting_match_state.dart';
 class VotingMatchBloc extends Bloc<VotingMatchEvent, VotingMatchState> {
   final MatchRepository matchRepository;
 
-  VotingMatchBloc({required this.matchRepository}) : super(const VotingMatchInitial()) {
+  VotingMatchBloc({required this.matchRepository})
+      : super(const VotingMatchInitial()) {
     on<GetMatchScheduleEvent>(_onGetMatchSchedule);
     on<GetMatchDetailsEvent>(_onGetMatchDetails);
     on<SubmitEagleOfTheMatchVoteEvent>(_onSubmitEagleOfTheMatchVote);
     on<SubmitPlayerRatingEvent>(_onSubmitPlayerRating);
   }
 
-  Future<void> _onGetMatchSchedule(GetMatchScheduleEvent event, Emitter<VotingMatchState> emit) async {
+  Future<void> _onGetMatchSchedule(
+      GetMatchScheduleEvent event, Emitter<VotingMatchState> emit) async {
     emit(const VotingMatchLoading());
     try {
       final matches = await matchRepository.getMatchSchedule();
@@ -25,7 +27,8 @@ class VotingMatchBloc extends Bloc<VotingMatchEvent, VotingMatchState> {
     }
   }
 
-  Future<void> _onGetMatchDetails(GetMatchDetailsEvent event, Emitter<VotingMatchState> emit) async {
+  Future<void> _onGetMatchDetails(
+      GetMatchDetailsEvent event, Emitter<VotingMatchState> emit) async {
     emit(const VotingMatchLoading());
     try {
       final match = await matchRepository.getMatchDetails(event.matchId);
@@ -40,7 +43,8 @@ class VotingMatchBloc extends Bloc<VotingMatchEvent, VotingMatchState> {
     Emitter<VotingMatchState> emit,
   ) async {
     try {
-      await matchRepository.submitEagleOfTheMatchVote(event.matchId, event.playerId, event.userId);
+      await matchRepository.submitEagleOfTheMatchVote(
+          event.matchId, event.playerId, event.userId);
       emit(const VoteSubmittedSuccess());
     } catch (e) {
       emit(VotingMatchError(e.toString()));
@@ -52,7 +56,8 @@ class VotingMatchBloc extends Bloc<VotingMatchEvent, VotingMatchState> {
     Emitter<VotingMatchState> emit,
   ) async {
     try {
-      await matchRepository.submitPlayerRating(event.matchId, event.playerId, event.userId, event.rating);
+      await matchRepository.submitPlayerRating(
+          event.matchId, event.playerId, event.userId, event.rating);
       emit(const RatingSubmittedSuccess());
     } catch (e) {
       emit(VotingMatchError(e.toString()));

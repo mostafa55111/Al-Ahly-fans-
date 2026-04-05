@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:intl/intl.dart';
 
 class PredictWinScreen extends StatefulWidget {
   final Map<String, dynamic> matchData;
@@ -24,9 +23,10 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
 
   void _checkUserPrediction() async {
     const userId = "current_user_id"; // يتم الحصول عليه من Firebase Auth
-    final predictionRef = FirebaseDatabase.instance.ref("predictions/${widget.matchData['id']}/$userId");
+    final predictionRef = FirebaseDatabase.instance
+        .ref("predictions/${widget.matchData['id']}/$userId");
     final snapshot = await predictionRef.get();
-    
+
     if (snapshot.exists) {
       setState(() {
         _selectedPrediction = snapshot.value as String?;
@@ -45,7 +45,7 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
 
     const userId = "current_user_id";
     final matchId = widget.matchData['id'];
-    
+
     // حفظ التوقع في Firebase
     await FirebaseDatabase.instance
         .ref("predictions/$matchId/$userId")
@@ -86,7 +86,8 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
           Positioned.fill(
             child: Opacity(
               opacity: 0.05,
-              child: Image.asset('assets/images/gold_pattern.png', repeat: ImageRepeat.repeat),
+              child: Image.asset('assets/images/gold_pattern.png',
+                  repeat: ImageRepeat.repeat),
             ),
           ),
           SingleChildScrollView(
@@ -98,7 +99,10 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.amber.withAlpha(25), Colors.red.withAlpha(25)],
+                        colors: [
+                          Colors.amber.withAlpha(25),
+                          Colors.red.withAlpha(25)
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -109,7 +113,10 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
                       children: [
                         const Text(
                           "توقع نتيجة المباراة",
-                          style: TextStyle(color: Colors.amber, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.amber,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 20),
                         Row(
@@ -117,17 +124,33 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
                           children: [
                             Column(
                               children: [
-                                const Icon(Icons.sports_soccer, color: Colors.amber, size: 40),
+                                const Icon(Icons.sports_soccer,
+                                    color: Colors.amber, size: 40),
                                 const SizedBox(height: 8),
-                                Text(homeTeam, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                Text(homeTeam,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center),
                               ],
                             ),
-                            const Text("VS", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                            const Text("VS",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold)),
                             Column(
                               children: [
-                                const Icon(Icons.sports_soccer, color: Colors.amber, size: 40),
+                                const Icon(Icons.sports_soccer,
+                                    color: Colors.amber, size: 40),
                                 const SizedBox(height: 8),
-                                Text(awayTeam, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                Text(awayTeam,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center),
                               ],
                             ),
                           ],
@@ -141,7 +164,10 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
                   delay: const Duration(milliseconds: 200),
                   child: const Text(
                     "اختر توقعك:",
-                    style: TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -166,13 +192,19 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
-                            BoxShadow(color: Colors.red.withAlpha(128), blurRadius: 15, spreadRadius: 2),
+                            BoxShadow(
+                                color: Colors.red.withAlpha(128),
+                                blurRadius: 15,
+                                spreadRadius: 2),
                           ],
                         ),
                         child: const Center(
                           child: Text(
                             "تأكيد التوقع (+10 نقاط)",
-                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -190,7 +222,10 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
                     child: const Center(
                       child: Text(
                         "✓ تم حفظ توقعك",
-                        style: TextStyle(color: Colors.green, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.green,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -234,10 +269,13 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? color : Colors.white.withAlpha(76)),
+                border: Border.all(
+                    color: isSelected ? color : Colors.white.withAlpha(76)),
                 color: isSelected ? color : Colors.transparent,
               ),
-              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+              child: isSelected
+                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                  : null,
             ),
           ],
         ),
@@ -260,7 +298,10 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
           children: [
             const Text(
               "🏆 أفضل المتوقعين",
-              style: TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.amber,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
             _buildLeaderboardItem("أحمد محمد", 850, 1),
@@ -281,13 +322,18 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: rank == 1 ? Colors.amber : rank == 2 ? Colors.grey[400] : Colors.orange.withAlpha(128),
+              color: rank == 1
+                  ? Colors.amber
+                  : rank == 2
+                      ? Colors.grey[400]
+                      : Colors.orange.withAlpha(128),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 "$rank",
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -300,7 +346,8 @@ class _PredictWinScreenState extends State<PredictWinScreen> {
           ),
           Text(
             "$points نقطة",
-            style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.amber, fontWeight: FontWeight.bold),
           ),
         ],
       ),

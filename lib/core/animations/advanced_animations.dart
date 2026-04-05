@@ -17,7 +17,8 @@ class RedGlowEffect extends StatefulWidget {
   State<RedGlowEffect> createState() => _RedGlowEffectState();
 }
 
-class _RedGlowEffectState extends State<RedGlowEffect> with SingleTickerProviderStateMixin {
+class _RedGlowEffectState extends State<RedGlowEffect>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _glowAnimation;
 
@@ -56,9 +57,9 @@ class _RedGlowEffectState extends State<RedGlowEffect> with SingleTickerProvider
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withOpacity(_glowAnimation.value * 0.6),
-                blurRadius: 20 * _glowAnimation.value,
-                spreadRadius: 5 * _glowAnimation.value,
+                color: Colors.red.withValues(alpha: _glowAnimation.value * 0.6),
+                blurRadius: 20.0 * _glowAnimation.value,
+                spreadRadius: 5.0 * _glowAnimation.value,
               ),
             ],
           ),
@@ -92,7 +93,8 @@ class RippleEffect extends StatefulWidget {
   State<RippleEffect> createState() => _RippleEffectState();
 }
 
-class _RippleEffectState extends State<RippleEffect> with SingleTickerProviderStateMixin {
+class _RippleEffectState extends State<RippleEffect>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
@@ -127,19 +129,23 @@ class _RippleEffectState extends State<RippleEffect> with SingleTickerProviderSt
           AnimatedBuilder(
             animation: _scaleAnimation,
             builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.rippleColor.withOpacity(_opacityAnimation.value),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.rippleColor.withOpacity(_opacityAnimation.value),
-                      blurRadius: 20 * _scaleAnimation.value,
-                      spreadRadius: 10 * _scaleAnimation.value,
-                    ),
-                  ],
+              return Transform.scale(
+                scale: _scaleAnimation.value + 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.rippleColor
+                        .withValues(alpha: _opacityAnimation.value),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.rippleColor
+                            .withValues(alpha: _opacityAnimation.value),
+                        blurRadius: 20.0 * _scaleAnimation.value,
+                        spreadRadius: 10.0 * _scaleAnimation.value,
+                      ),
+                    ],
+                  ),
                 ),
-                transform: Matrix4.identity()..scale(_scaleAnimation.value + 1),
               );
             },
           ),
@@ -171,7 +177,8 @@ class ShakeEffect extends StatefulWidget {
   State<ShakeEffect> createState() => _ShakeEffectState();
 }
 
-class _ShakeEffectState extends State<ShakeEffect> with SingleTickerProviderStateMixin {
+class _ShakeEffectState extends State<ShakeEffect>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -198,7 +205,7 @@ class _ShakeEffectState extends State<ShakeEffect> with SingleTickerProviderStat
       builder: (context, child) {
         final shake = 10 * (0.5 - (_controller.value - 0.5).abs());
         return Transform.translate(
-          offset: Offset(shake, 0),
+          offset: Offset(shake, 0.0),
           child: widget.child,
         );
       },
@@ -229,7 +236,8 @@ class BounceEffect extends StatefulWidget {
   State<BounceEffect> createState() => _BounceEffectState();
 }
 
-class _BounceEffectState extends State<BounceEffect> with SingleTickerProviderStateMixin {
+class _BounceEffectState extends State<BounceEffect>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _bounceAnimation;
 

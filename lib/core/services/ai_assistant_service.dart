@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:gomhor_alahly_clean_new/main.dart' as app;
+import 'package:gomhor_alahly_clean_new/core/config/app_config.dart';
 
 class AiAssistantService {
-  static const String _systemPrompt = '''أنت مساعد ذكي متخصص في النادي الأهلي المصري. 
+  static const String _systemPrompt =
+      '''أنت مساعد ذكي متخصص في النادي الأهلي المصري. 
 تجيب على جميع الأسئلة المتعلقة بـ:
 - تاريخ النادي الأهلي وإنجازاته (41 بطولة محلية، 8 بطولات إفريقية)
 - إحصائيات اللاعبين والفريق الحالي
@@ -19,7 +21,7 @@ class AiAssistantService {
   /// تهيئة خدمة الـ AI
   static void initialize([String? apiKey]) {
     if (!_initialized) {
-      final key = apiKey ?? app.GEMINI_API_KEY;
+      final key = apiKey ?? AppConfig.geminiApiKey;
       _model = GenerativeModel(
         model: 'gemini-pro',
         apiKey: key,
@@ -28,9 +30,13 @@ class AiAssistantService {
     }
   }
 
-  /// تهيئة تلقائية باستخدام المفتاح من main.dart
-  static void initializeAuto() {
-    initialize(app.GEMINI_API_KEY);
+  /// إعادة تعيين المفتاح يدوياً إذا لزم الأمر
+  static void resetApiKey(String key) {
+    _model = GenerativeModel(
+      model: 'gemini-pro',
+      apiKey: key,
+    );
+    _initialized = true;
   }
 
   /// جلب إجابة ذكية من Gemini
@@ -46,29 +52,34 @@ class AiAssistantService {
       ];
 
       final response = await _model.generateContent(content);
-      
+
       return response.text ?? "عذراً، لم أستطع الإجابة على سؤالك.";
     } catch (e) {
-      print('خطأ في AI Assistant: $e');
+      if (kDebugMode) {
+        debugPrint('خطأ في AI Assistant: $e');
+      }
       return "حدث خطأ في الاتصال. يرجى المحاولة لاحقاً.";
     }
   }
 
   /// البحث عن لاعب معين وإرجاع معلومات عنه
   static Future<String> searchPlayer(String playerName) async {
-    final query = "أخبرني عن لاعب النادي الأهلي $playerName. ما هي إحصائياته وإنجازاته؟";
+    final query =
+        "أخبرني عن لاعب النادي الأهلي $playerName. ما هي إحصائياته وإنجازاته؟";
     return await getSmartAnswer(query);
   }
 
   /// الحصول على معلومات عن مباراة قادمة
   static Future<String> getMatchInfo(String opponent) async {
-    final query = "ما هي معلومات المباراة القادمة للأهلي ضد $opponent؟ متى موعدها وأين ستقام؟";
+    final query =
+        "ما هي معلومات المباراة القادمة للأهلي ضد $opponent؟ متى موعدها وأين ستقام؟";
     return await getSmartAnswer(query);
   }
 
   /// الحصول على إحصائيات النادي
   static Future<String> getAhlyStats() async {
-    const query = "أخبرني عن إحصائيات النادي الأهلي الشاملة (البطولات، الألقاب، أفضل اللاعبين)";
+    const query =
+        "أخبرني عن إحصائيات النادي الأهلي الشاملة (البطولات، الألقاب، أفضل اللاعبين)";
     return await getSmartAnswer(query);
   }
 
@@ -80,7 +91,8 @@ class AiAssistantService {
 
   /// تحليل أداء اللاعب
   static Future<String> analyzePlayerPerformance(String playerName) async {
-    final query = "قم بتحليل أداء اللاعب $playerName في آخر 5 مباريات. ما هي نقاط القوة والضعف؟";
+    final query =
+        "قم بتحليل أداء اللاعب $playerName في آخر 5 مباريات. ما هي نقاط القوة والضعف؟";
     return await getSmartAnswer(query);
   }
 }

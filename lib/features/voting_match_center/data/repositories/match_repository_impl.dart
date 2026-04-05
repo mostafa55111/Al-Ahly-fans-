@@ -18,13 +18,16 @@ class MatchRepositoryImpl implements MatchRepository {
   }
 
   @override
-  Future<void> submitEagleOfTheMatchVote(String matchId, String playerId, String userId) async {
+  Future<void> submitEagleOfTheMatchVote(
+      String matchId, String playerId, String userId) async {
     await remoteDataSource.submitEagleOfTheMatchVote(matchId, playerId, userId);
   }
 
   @override
-  Future<void> submitPlayerRating(String matchId, String playerId, String userId, int rating) async {
-    await remoteDataSource.submitPlayerRating(matchId, playerId, userId, rating);
+  Future<void> submitPlayerRating(
+      String matchId, String playerId, String userId, int rating) async {
+    await remoteDataSource.submitPlayerRating(
+        matchId, playerId, userId, rating);
   }
 
   @override
