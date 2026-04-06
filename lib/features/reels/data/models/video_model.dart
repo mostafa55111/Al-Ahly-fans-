@@ -39,6 +39,7 @@ class VideoModel {
       try {
         if (value == null) return 0;
         if (value is int) return value;
+        if (value is Map) return value.length;
         if (value is String) {
           if (value.isEmpty) return 0;
           return int.tryParse(value) ?? 0;

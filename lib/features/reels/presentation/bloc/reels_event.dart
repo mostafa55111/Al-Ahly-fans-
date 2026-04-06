@@ -37,6 +37,12 @@ class AddCommentEvent extends ReelsEvent {
   });
 }
 
+class FetchCommentsEvent extends ReelsEvent {
+  final String videoId;
+
+  const FetchCommentsEvent({required this.videoId});
+}
+
 class ShareVideoEvent extends ReelsEvent {
   final String videoId;
   final String userId;

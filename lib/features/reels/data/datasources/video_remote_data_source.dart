@@ -16,99 +16,62 @@ class VideoRemoteDataSource {
     }
   }
 
-  /// Fetch reels from Realtime Database
+  /// Fetches reels from the Realtime Database in a non-blocking way.
+  /// It ensures the UI never hangs, even if fetching user data fails.
   Future<List<VideoModel>> fetchReels() async {
+    final ref = _database.ref();
     try {
-      debugPrint('🎬 FETCH: Starting reels fetch with 15s timeout...');
-      
-      // Add timeout to the entire operation
-      final ref = FirebaseDatabase.instance.ref(_reelsPath);
-      final snapshot = await ref.get().timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          debugPrint('🎬 FETCH: ❌ TIMEOUT: Firebase fetch timeout after 15 seconds');
-          throw TimeoutException('Firebase fetch timeout after 15 seconds');
-        },
-      );
+      debugPrint('🎬 FETCH: Starting reels fetch...');
+      // Use a timeout to prevent infinite loading on network issues.
+      final snapshot = await ref.child(_reelsPath).get().timeout(const Duration(seconds: 15));
 
+      // If no reels exist, return an empty list immediately.
       if (!snapshot.exists || snapshot.value == null) {
-        debugPrint('🎬 FETCH: No reels found in Firebase');
+        debugPrint('🎬 FETCH: No reels found.');
         return [];
       }
 
-      // Hard Fix for Firebase Data Type Error: Ensure safe casting for top-level map
-      final rawData = Map<dynamic, dynamic>.from(snapshot.value as Map);
-      final List<VideoModel> reels = [];
+      final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+      final processedData = data.cast<String, dynamic>();
 
-      debugPrint('🎬 FETCH: Processing ${rawData.length} raw reel entries...');
+      // Process each reel and its user data safely.
+      final videoFutures = processedData.entries.map((entry) async {
+        final key = entry.key;
+        final value = Map<String, dynamic>.from(entry.value);
 
-      for (var entry in rawData.entries) {
-        try {
-          if (entry.value is Map) {
-            // Ensure safe casting for nested maps as well
-            final item = Map<String, dynamic>.from(entry.value.map((k, v) => MapEntry(k.toString(), v)));
-            
-            // Create reel with basic data
-            final reel = VideoModel.fromJson(item, entry.key.toString());
-            
-            // Only fetch user data if we have a valid userId and it's not empty
-            if (reel.userId.isNotEmpty && reel.userId != 'anonymous_user') {
-              try {
-                final userSnapshot = await FirebaseDatabase.instance
-                    .ref('users/${reel.userId}')
-                    .get()
-                    .timeout(const Duration(seconds: 3));
-                    
-                if (userSnapshot.exists && userSnapshot.value != null) {
-                  final userData = Map<String, dynamic>.from(
-                    (userSnapshot.value as Map).map((k, v) => MapEntry(k.toString(), v))
-                  );
-                  
-                  // Merge user data with reel
-                  final updatedReel = reel.copyWith(
-                    userName: userData['name'] ?? userData['displayName'] ?? userData['username'] ?? 'مستخدم',
-                    userProfilePic: userData['image'] ?? userData['photoURL'] ?? userData['profilePic'] ?? userData['avatar'] ?? '',
-                  );
-                  reels.add(updatedReel);
-                } else {
-                  // Use original reel but ensure we have at least a user name
-                  final fallbackReel = reel.userName.isEmpty 
-                    ? reel.copyWith(userName: 'مستخدم')
-                    : reel;
-                  reels.add(fallbackReel);
-                }
-              } catch (e) {
-                debugPrint('🎬 FETCH: Failed to fetch user data for ${reel.userId}: $e');
-                // Use original reel but ensure we have at least a user name
-                final fallbackReel = reel.userName.isEmpty 
-                  ? reel.copyWith(userName: 'مستخدم')
-                  : reel;
-                reels.add(fallbackReel);
-              }
-            } else {
-              // For reels without userId, use default user info
-              final defaultReel = reel.copyWith(
-                userId: reel.userId.isEmpty ? 'anonymous_user' : reel.userId,
-                userName: reel.userName.isEmpty ? 'مستخدم' : reel.userName,
+        // Create the base video model.
+        var video = VideoModel.fromJson(value, key);
+        final userId = video.userId;
+
+        // SAFE USER FETCH: Wrap in a try-catch to prevent a single user fetch
+        // failure from blocking the entire reel list.
+        if (userId.isNotEmpty) {
+          try {
+            final userSnap = await ref.child('users/$userId').get().timeout(const Duration(seconds: 5));
+            if (userSnap.exists && userSnap.value != null) {
+              final userData = Map<String, dynamic>.from(userSnap.value as Map);
+              // Update video model with user data if fetch is successful.
+              video = video.copyWith(
+                userName: userData['name'] ?? userData['displayName'] ?? 'Al Ahly Fan',
+                userProfilePic: userData['image'] ?? userData['photoURL'] ?? '',
               );
-              reels.add(defaultReel);
             }
+          } catch (e) {
+            // Log the error but don't rethrow; we still want to show the video.
+            debugPrint("⚠️ User fetch error for userId: $userId. Error: $e");
           }
-        } catch (e) {
-          debugPrint('🎬 FETCH: Error processing reel entry ${entry.key}: $e');
-          // Continue processing other reels even if one fails
         }
-      }
+        return video;
+      }).toList();
 
-      debugPrint("🎬 FETCH: Successfully processed ${reels.length} reels");
-      return reels.reversed.toList();
-      
-    } catch (e, stackTrace) {
-      debugPrint('🎬 FETCH ERROR: Failed to fetch reels - $e');
-      debugPrint('🎬 Stack trace: $stackTrace');
-      
-      // Don't rethrow - return empty list instead to prevent bloc from getting stuck
-      // This allows the UI to show an empty state instead of infinite loading
+      final videos = await Future.wait(videoFutures);
+
+      debugPrint("🎬 FETCH: Successfully processed ${videos.length} reels.");
+      return videos.reversed.toList(); // Show newest first.
+
+    } catch (e) {
+      // IMPORTANT: Always return a list, even an empty one, to prevent UI from crashing or hanging.
+      debugPrint("❌ Top-level reels fetch error: $e");
       return [];
     }
   }

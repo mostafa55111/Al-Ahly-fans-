@@ -69,6 +69,18 @@ class ReelsLoaded extends ReelsState {
   List<Object> get props => [reels, hasMore, isLoadingMore, errorMessage != null ? errorMessage! : ''];
 }
 
+class ReelsComments extends ReelsState {
+  final List<Map<String, dynamic>> comments;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const ReelsComments({required this.comments, this.isLoading = false, this.errorMessage});
+
+  @override
+  List<Object> get props => [comments, isLoading, errorMessage ?? ''];
+}
+
+
 class ReelsError extends ReelsState {
   final String message;
 
