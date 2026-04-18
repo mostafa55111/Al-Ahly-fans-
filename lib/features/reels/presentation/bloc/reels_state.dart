@@ -1,4 +1,5 @@
-part of 'reels_bloc.dart';
+import 'package:equatable/equatable.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/domain/entities/reel.dart';
 
 abstract class ReelsState extends Equatable {
   const ReelsState();
@@ -9,77 +10,30 @@ abstract class ReelsState extends Equatable {
 
 class ReelsInitial extends ReelsState {}
 
-class ReelsLoading extends ReelsState {
-  const ReelsLoading();
-}
-
-class ReelsEmpty extends ReelsState {
-  final String message;
-  
-  const ReelsEmpty(this.message);
-  
-  @override
-  List<Object> get props => [message];
-}
+class ReelsLoading extends ReelsState {}
 
 class ReelsLoaded extends ReelsState {
-  final List<VideoEntity> reels;
-  final bool hasMore;
-  final bool isLoadingMore;
-  final String? errorMessage;
+  final List<Reel> reels;
+  final bool hasReachedMax;
 
-  const ReelsLoaded(this.reels, {this.hasMore = true, this.isLoadingMore = false, this.errorMessage});
+  const ReelsLoaded({
+    required this.reels,
+    this.hasReachedMax = false,
+  });
 
   ReelsLoaded copyWith({
-    List<VideoEntity>? reels,
-    bool? hasMore,
-    bool? isLoadingMore,
-    String? errorMessage,
+    List<Reel>? reels,
+    bool? hasReachedMax,
   }) {
     return ReelsLoaded(
-      reels ?? this.reels,
-      hasMore: hasMore ?? this.hasMore,
-      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      errorMessage: errorMessage ?? this.errorMessage,
+      reels: reels ?? this.reels,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
     );
   }
 
-  ReelsLoaded copyWithVideoUpdated(int videoIndex, VideoEntity updatedVideo) {
-    if (videoIndex < 0 || videoIndex >= reels.length) {
-      return this;
-    }
-    final newReels = List<VideoEntity>.from(reels);
-    newReels[videoIndex] = updatedVideo;
-    return copyWith(reels: newReels);
-  }
-
-  ReelsLoaded copyWithVideosAppended(List<VideoEntity> newVideos, {bool? newHasMore}) {
-    return copyWith(
-      reels: [...reels, ...newVideos],
-      hasMore: newHasMore ?? hasMore,
-      isLoadingMore: false,
-    );
-  }
-
-  ReelsLoaded copyWithLoading(bool isLoadingMore) {
-    return copyWith(isLoadingMore: isLoadingMore);
-  }
-
   @override
-  List<Object> get props => [reels, hasMore, isLoadingMore, errorMessage != null ? errorMessage! : ''];
+  List<Object> get props => [reels, hasReachedMax];
 }
-
-class ReelsComments extends ReelsState {
-  final List<Map<String, dynamic>> comments;
-  final bool isLoading;
-  final String? errorMessage;
-
-  const ReelsComments({required this.comments, this.isLoading = false, this.errorMessage});
-
-  @override
-  List<Object> get props => [comments, isLoading, errorMessage ?? ''];
-}
-
 
 class ReelsError extends ReelsState {
   final String message;

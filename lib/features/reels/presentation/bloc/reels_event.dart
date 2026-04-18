@@ -1,59 +1,10 @@
-import 'dart:io';
-part of 'reels_bloc.dart';
+import 'package:equatable/equatable.dart';
 
-abstract class ReelsEvent {
+abstract class ReelsEvent extends Equatable {
   const ReelsEvent();
+
+  @override
+  List<Object> get props => [];
 }
 
-class LoadReelsEvent extends ReelsEvent {
-  const LoadReelsEvent();
-}
-
-class LoadMoreReelsEvent extends ReelsEvent {
-  const LoadMoreReelsEvent();
-}
-
-class ToggleLikeEvent extends ReelsEvent {
-  final String videoId;
-  final String userId;
-  final bool isLiked;
-
-  const ToggleLikeEvent({
-    required this.videoId,
-    required this.userId,
-    required this.isLiked,
-  });
-}
-
-class AddCommentEvent extends ReelsEvent {
-  final String videoId;
-  final String userId;
-  final String commentText;
-
-  const AddCommentEvent({
-    required this.videoId,
-    required this.userId,
-    required this.commentText,
-  });
-}
-
-class FetchCommentsEvent extends ReelsEvent {
-  final String videoId;
-
-  const FetchCommentsEvent({required this.videoId});
-}
-
-class ShareVideoEvent extends ReelsEvent {
-  final String videoId;
-  final String userId;
-
-  const ShareVideoEvent({required this.videoId, required this.userId});
-}
-
-class UploadVideoEvent extends ReelsEvent {
-  final File file;
-
-  const UploadVideoEvent({
-    required this.file,
-  });
-}
+class FetchReels extends ReelsEvent {}
