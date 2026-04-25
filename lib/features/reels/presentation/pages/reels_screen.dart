@@ -10,8 +10,6 @@ import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/load
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/error_widget.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/cache_info_widget.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/providers/video_preload_manager.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:io';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/comments_screen.dart';
 
 class ReelsScreen extends StatefulWidget {
@@ -30,8 +28,6 @@ class _ReelsScreenState extends State<ReelsScreen> {
 
   // Get current user ID (replace with actual auth service integration)
   String get _currentUserId => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_user';
-  String get _currentUserName => FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous';
-  String get _currentUserProfilePic => FirebaseAuth.instance.currentUser?.photoURL ?? '';
 
   @override
   void initState() {
@@ -104,19 +100,23 @@ class _ReelsScreenState extends State<ReelsScreen> {
       );
 
       if (file != null) {
-        context.read<ReelsBloc>().add(
-          UploadVideoEvent(
-            file: File(file.path),
+        if (mounted) {
+          context.read<ReelsBloc>().add(
+            UploadVideoEvent(
+              file: File(file.path),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error selecting video: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error selecting video: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 

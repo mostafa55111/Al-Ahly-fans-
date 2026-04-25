@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
         );
       }
     } catch (e) {
@@ -67,9 +67,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   FadeInDown(
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 50,
-                      backgroundImage: const AssetImage('assets/images/logo.png'),
+                      backgroundImage: AssetImage('assets/images/logo.png'),
                     ),
                   ),
                   const SizedBox(height: 30),

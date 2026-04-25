@@ -112,15 +112,15 @@ class _CacheInfoWidgetState extends State<CacheInfoWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.storage,
                 color: Colors.white,
                 size: 20,
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Video Cache',
                 style: TextStyle(
                   color: Colors.white,

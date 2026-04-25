@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
 import 'package:gomhor_alahly_clean_new/core/utils/error_handler.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/data/datasources/video_remote_data_source.dart';
@@ -63,7 +64,7 @@ class VideoRepositoryImpl implements VideoRepository {
   Future<String> uploadVideo(File file) async {
     try {
       final url = await cloudinaryService.uploadVideo(file);
-      print("Cloudinary upload complete: $url");
+      debugPrint("Cloudinary upload complete: $url");
       return url;
     } catch (e, stack) {
       throw ErrorHandler.handleError(e, stack);
@@ -94,7 +95,7 @@ class VideoRepositoryImpl implements VideoRepository {
         savesCount: 0,
       );
       await remoteDataSource.saveReel(videoModel);
-      print("Firebase save complete for reel ID: $newReelId");
+      debugPrint("Firebase save complete for reel ID: $newReelId");
     } catch (e, stack) {
       throw ErrorHandler.handleError(e, stack);
     }

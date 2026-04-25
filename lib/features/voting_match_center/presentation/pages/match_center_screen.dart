@@ -3,10 +3,9 @@ import 'package:animate_do/animate_do.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:gomhor_alahly_clean_new/core/services/sports_api_service.dart';
 import 'package:gomhor_alahly_clean_new/features/voting_match_center/presentation/widgets/eagle_of_match_overlay.dart';
-import 'package:gomhor_alahly_clean_new/features/live_match_updates/data/models/match_model.dart';
-import 'package:gomhor_alahly_clean_new/features/live_match_updates/domain/entities/match_entity.dart';
+import 'package:gomhor_alahly_clean_new/features/voting_match_center/data/models/match_model.dart';
+import 'package:gomhor_alahly_clean_new/features/voting_match_center/data/models/player_model.dart';
 
 class MatchCenterScreen extends StatefulWidget {
   const MatchCenterScreen({super.key});
@@ -18,7 +17,6 @@ class MatchCenterScreen extends StatefulWidget {
 class _MatchCenterScreenState extends State<MatchCenterScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final SportsApiService _sportsApi = SportsApiService();
 
   @override
   void initState() {
@@ -30,6 +28,45 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<List<MatchModel>> _getMockMatches(bool isNext) async {
+    // Simulate API delay
+    await Future.delayed(const Duration(seconds: 1));
+    
+    final now = DateTime.now();
+    return [
+      MatchModel(
+        id: '1',
+        homeTeam: 'Al Ahly',
+        awayTeam: 'Zamalek',
+        matchTime: isNext ? now.add(const Duration(days: 3)) : now.subtract(const Duration(days: 7)),
+        status: isNext ? 'scheduled' : 'finished',
+        homeScore: isNext ? null : '2',
+        awayScore: isNext ? null : '1',
+        tournament: 'Egyptian Premier League',
+        homeTeamLogo: 'https://example.com/alahly.png',
+        awayTeamLogo: 'https://example.com/zamalek.png',
+        homeTeamLineup: ['Player1', 'Player2', 'Player3'],
+        awayTeamLineup: ['Player4', 'Player5', 'Player6'],
+        isFinished: !isNext,
+      ),
+      MatchModel(
+        id: '2',
+        homeTeam: 'Al Ahly',
+        awayTeam: 'Pyramids FC',
+        matchTime: isNext ? now.add(const Duration(days: 7)) : now.subtract(const Duration(days: 14)),
+        status: isNext ? 'scheduled' : 'finished',
+        homeScore: isNext ? null : '3',
+        awayScore: isNext ? null : '0',
+        tournament: 'Egyptian Premier League',
+        homeTeamLogo: 'https://example.com/alahly.png',
+        awayTeamLogo: 'https://example.com/pyramids.png',
+        homeTeamLineup: ['Player7', 'Player8', 'Player9'],
+        awayTeamLineup: ['Player10', 'Player11', 'Player12'],
+        isFinished: !isNext,
+      ),
+    ];
   }
 
   @override
@@ -75,8 +112,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
 
   Widget _buildMatchesTab({required bool isNext}) {
     return FutureBuilder<List<MatchModel>>(
-      future:
-          isNext ? _sportsApi.getNextMatches() : _sportsApi.getLastMatches(),
+      future: _getMockMatches(isNext),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
@@ -87,7 +123,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
         final matches = (snapshot.data ?? []).where(_isAlAhlyMatch).toList();
         if (snapshot.hasError || matches.isEmpty) {
           return const Center(
-            child: Text('لا توجد مباريات للأهلي حالياً',
+            child: Text('No Al Ahly matches available',
                 style: TextStyle(color: Colors.white54)),
           );
         }
@@ -115,7 +151,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
                   child: Column(
                     children: [
                       Text(
-                        match.tournament,
+                        match.tournament ?? 'Egyptian Premier League',
                         style: const TextStyle(
                             color: Colors.white54, fontSize: 12),
                       ),
@@ -126,7 +162,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
                             child: Column(
                               children: [
                                 CachedNetworkImage(
-                                  imageUrl: match.homeTeamLogo,
+                                  imageUrl: match.homeTeamLogo ?? '',
                                   height: 50,
                                   width: 50,
                                   fit: BoxFit.contain,
@@ -149,9 +185,8 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
                             children: [
                               Text(
                                 isNext
-                                    ? _sportsApi
-                                        .getMatchStatusDisplay(match.status)
-                                    : "${match.homeScore} - ${match.awayScore}",
+                                    ? match.status
+                                    : "${match.homeScore ?? '0'} - ${match.awayScore ?? '0'}",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -170,7 +205,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
                             child: Column(
                               children: [
                                 CachedNetworkImage(
-                                  imageUrl: match.awayTeamLogo,
+                                  imageUrl: match.awayTeamLogo ?? '',
                                   height: 50,
                                   width: 50,
                                   fit: BoxFit.contain,
@@ -204,7 +239,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
 
   Widget _buildStandingsTab() {
     return FutureBuilder<List<MatchModel>>(
-      future: _sportsApi.getLastMatches(),
+      future: _getMockMatches(false),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -232,15 +267,21 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
     );
   }
 
-  /// بناء كروت اللاعبين للتصويت
+  /// Build player voting cards
   Widget _buildPlayerVotingCards(MatchModel match) {
-    final players = match.homeTeamLineup
-        .where((player) => player.name.isNotEmpty && player.number > 0)
-        .toList();
+    final playerNames = match.homeTeamLineup ?? [];
+    final players = playerNames.map((name) => Player(
+      id: name.hashCode.toString(),
+      name: name,
+      position: null,
+      imageUrl: null,
+      jerseyNumber: null,
+      team: match.homeTeam,
+    )).where((player) => player.name.isNotEmpty).toList();
 
     if (players.isEmpty) {
       return const Center(
-        child: Text('لا توجد بيانات اللاعبين متاحة',
+        child: Text('No player data available',
             style: TextStyle(color: Colors.white54)),
       );
     }
@@ -300,16 +341,16 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
               CircleAvatar(
                 radius: 30,
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                backgroundImage: player.imageUrl.isNotEmpty
-                    ? NetworkImage(player.imageUrl)
+                backgroundImage: player.imageUrl != null && player.imageUrl!.isNotEmpty
+                    ? NetworkImage(player.imageUrl!)
                     : null,
-                child: player.imageUrl.isEmpty
+                child: player.imageUrl == null || player.imageUrl!.isEmpty
                     ? Text(
-                        '${player.number}',
+                        player.jerseyNumber?.toString() ?? '?',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       )
                     : null,
@@ -317,25 +358,16 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
               const SizedBox(height: 8),
               Text(
                 player.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Text(
-                player.position,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 10,
-                ),
-              ),
-              if (player.isCaptain)
-                const Icon(Icons.star, color: Color(0xFFD4AF37), size: 12),
+              // isCaptain property not available in current Player model
             ],
           ),
         ),
@@ -391,7 +423,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
     voteRef.set({
       'playerId': player.id,
       'playerName': player.name,
-      'playerNumber': player.number,
+      'playerNumber': player.jerseyNumber,
       'votedAt': DateTime.now().toIso8601String(),
     }).then((_) {
       if (!mounted) return;
@@ -411,7 +443,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
 
   Widget _buildVotingTab() {
     return FutureBuilder<List<MatchModel>>(
-      future: _sportsApi.getLastMatches(),
+      future: _getMockMatches(false),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -477,7 +509,7 @@ class _MatchCenterScreenState extends State<MatchCenterScreen>
 
   MatchModel? _findLatestFinishedMatch(List<MatchModel> matches) {
     for (final match in matches) {
-      if (match.status == MatchStatus.finished || match.isFinished) {
+      if (match.status.toLowerCase() == 'finished' || match.isFinished) {
         return match;
       }
     }

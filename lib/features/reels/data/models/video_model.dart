@@ -1,4 +1,6 @@
-import 'package:firebase_database/firebase_database.dart';
+
+import 'package:flutter/foundation.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/data/models/user_activity_summary.dart';
 
 class VideoModel {
   final String id;
@@ -14,7 +16,23 @@ class VideoModel {
   final int commentsCount;
   final int sharesCount;
   final int savesCount;
+
+  /// إجمالي عدد مرّات المشاهدة (يحدَّث تلقائياً من [ReelsRankingService])
+  final int viewsCount;
+
+  /// إجمالي ثواني المشاهدة عبر جميع المستخدمين
+  final int totalWatchTime;
+
   final bool isLikedByCurrentUser; // This will be set in the repository layer
+
+  /// حالة الحفظ الخاصة بالمستخدم الحالي (محلياً) — تأتي من
+  /// `users/{uid}/savedVideos/{videoId}` لا من الريل نفسه.
+  final bool isSavedByCurrentUser;
+
+  /// هل الريل خاص؟ (يظهر في تبويب "الخاص" بالبروفايل فقط ولا يظهر في الفيد العام)
+  /// ═══════════════════════════════════════════════════════════════
+  /// لما يبقى true → ما يظهرش في `For You` ولا `Following`، فقط لصاحبه.
+  final bool isPrivate;
 
   VideoModel({
     required this.id,
@@ -30,12 +48,68 @@ class VideoModel {
     this.commentsCount = 0,
     this.sharesCount = 0,
     this.savesCount = 0,
+    this.viewsCount = 0,
+    this.totalWatchTime = 0,
     this.isLikedByCurrentUser = false, // Default to false
+    this.isSavedByCurrentUser = false,
+    this.isPrivate = false,
   });
+
+  /// حساب الـ score للترتيب الذكي (For You feed - TikTok style)
+  /// ═══════════════════════════════════════════════════════════════
+  /// score = likesCount*2
+  ///       + commentsCount*3
+  ///       + sharesCount*4
+  ///       + viewsCount
+  ///       + freshness
+  /// ═══════════════════════════════════════════════════════════════
+  /// - share له أعلى وزن (أعمق engagement).
+  /// - comment وزنه أعلى من like (تفاعل نصّي > تفاعل سريع).
+  /// - freshness: يضيف حتى 50 نقطة للريل الجديد، يتلاشى خلال 7 أيام.
+  double get score =>
+      (likesCount * 2.0) +
+      (commentsCount * 3.0) +
+      (sharesCount * 4.0) +
+      viewsCount.toDouble() +
+      freshness;
+
+  /// معامل "الحداثة" — يعطي دفعة للريلز الجديدة ويخفت مع الوقت.
+  /// ═══════════════════════════════════════════════════════════════
+  /// - يبدأ بـ 50 نقطة عند الرفع.
+  /// - يتلاشى خطياً على مدى 7 أيام إلى 0.
+  /// - لا يصبح سالباً أبداً (clamp).
+  double get freshness {
+    final ageHours = DateTime.now().difference(timestamp).inMinutes / 60.0;
+    const decayWindowHours = 7 * 24.0; // 7 أيام
+    const maxBoost = 50.0;
+    final factor = 1.0 - (ageHours / decayWindowHours);
+    return (maxBoost * factor).clamp(0.0, maxBoost);
+  }
+
+  /// حساب الـ personalScore بناءً على سلوك المستخدم السابق.
+  /// ═══════════════════════════════════════════════════════
+  /// personalScore =
+  ///     baseScore
+  ///   + (userWatchTime * 2)   → مكافأة لو شاهد الريل سابقاً
+  ///   + 5                     → مكافأة إضافية لو عمل like
+  ///   - 10                    → عقوبة لو تخطّاه بسرعة (watchTime < 3s)
+  /// ═══════════════════════════════════════════════════════
+  /// لو ما فيش activity (ريل لم يشاهده المستخدم) → يُستخدم الـ baseScore فقط.
+  double personalScore(UserActivitySummary? activity) {
+    double p = score;
+    if (activity == null) return p;
+    if (activity.hasWatched) {
+      p += activity.watchTime * 2.0;
+    }
+    if (activity.liked) p += 5.0;
+    // تقليل ظهور الفيديوهات اللي تم تخطيها بسرعة
+    if (activity.skippedQuickly) p -= 10.0;
+    return p;
+  }
 
   factory VideoModel.fromJson(Map<String, dynamic> map, String id) {
     // Helper to safely parse int values, defaulting to 0
-    int _parseInt(dynamic value) {
+    int parseInt(dynamic value) {
       try {
         if (value == null) return 0;
         if (value is int) return value;
@@ -47,13 +121,13 @@ class VideoModel {
         if (value is bool) return value ? 1 : 0;
         return 0;
       } catch (e) {
-        print('⚠️ INT PARSE ERROR: $value - $e');
+        debugPrint(' INT PARSE ERROR: $value - $e');
         return 0;
       }
     }
 
     // Helper to safely parse DateTime from various formats
-    DateTime _parseTimestamp(dynamic timestamp) {
+    DateTime parseTimestamp(dynamic timestamp) {
       try {
         if (timestamp == null) return DateTime.now();
         if (timestamp is int) return DateTime.fromMillisecondsSinceEpoch(timestamp);
@@ -65,20 +139,20 @@ class VideoModel {
         }
         return DateTime.now();
       } catch (e) {
-        print('⚠️ TIMESTAMP PARSE ERROR: $timestamp - $e');
+        debugPrint(' TIMESTAMP PARSE ERROR: $timestamp - $e');
         return DateTime.now();
       }
     }
 
     // Helper to safely parse strings
-    String _parseString(dynamic value) {
+    String parseString(dynamic value) {
       try {
         if (value == null) return '';
         if (value is String) return value;
         if (value is int || value is double || value is bool) return value.toString();
         return '';
       } catch (e) {
-        print('⚠️ STRING PARSE ERROR: $value - $e');
+        debugPrint(' STRING PARSE ERROR: $value - $e');
         return '';
       }
     }
@@ -86,41 +160,50 @@ class VideoModel {
     try {
       return VideoModel(
         id: id,
-        videoUrl: _parseString(map['videoUrl']),
-        thumbnailUrl: _parseString(map['thumbnailUrl']),
-        caption: _parseString(map['caption']),
-        userId: _parseString(map['userId']),
-        userName: _parseString(map['userName']).isEmpty ? 'مستخدم' : _parseString(map['userName']),
-        userProfilePic: _parseString(map['userProfilePic']),
+        videoUrl: parseString(map['videoUrl']),
+        thumbnailUrl: parseString(map['thumbnailUrl']),
+        caption: parseString(map['caption']),
+        userId: parseString(map['userId']),
+        userName: parseString(map['userName']).isEmpty ? 'مستخدم' : parseString(map['userName']),
+        userProfilePic: parseString(map['userProfilePic']),
         fixtureId: map['fixtureId']?.toString(),
-        timestamp: _parseTimestamp(map['timestamp']),
-        likesCount: _parseInt(map['likesCount'] ?? map['likes'] ?? 0),
-        commentsCount: _parseInt(map['commentsCount'] ?? map['comments'] ?? 0),
-        sharesCount: _parseInt(map['sharesCount'] ?? map['shares'] ?? 0),
-        savesCount: _parseInt(map['savesCount'] ?? map['saves'] ?? 0),
+        timestamp: parseTimestamp(map['timestamp']),
+        likesCount: parseInt(map['likesCount'] ?? map['likes'] ?? 0),
+        commentsCount: parseInt(map['commentsCount'] ?? map['comments'] ?? 0),
+        sharesCount: parseInt(map['sharesCount'] ?? map['shares'] ?? 0),
+        savesCount: parseInt(map['savesCount'] ?? map['saves'] ?? 0),
+        viewsCount: parseInt(map['viewsCount'] ?? map['views'] ?? 0),
+        // نقرأ الحقل الجديد مع fallback على القديم للـ backward compatibility
+        totalWatchTime:
+            parseInt(map['totalWatchTime'] ?? map['watchTime'] ?? 0),
         isLikedByCurrentUser: false, // This will be set in the repository layer
+        isPrivate: map['isPrivate'] == true,
       );
     } catch (e, stackTrace) {
       // Return a default VideoModel if parsing fails
-      print('❌ VIDEO MODEL ERROR: Failed to parse VideoModel: $e');
-      print('❌ Stack trace: $stackTrace');
-      print('❌ Problematic data: ${map.toString()}');
+      debugPrint(' VIDEO MODEL ERROR: Failed to parse VideoModel: $e');
+      debugPrint(' Stack trace: $stackTrace');
+      debugPrint(' Problematic data: ${map.toString()}');
       
       // Create minimal valid model to prevent app crashes
       return VideoModel(
         id: id,
-        videoUrl: _parseString(map['videoUrl']),
-        thumbnailUrl: _parseString(map['thumbnailUrl']),
-        caption: _parseString(map['caption']),
-        userId: _parseString(map['userId']),
-        userName: _parseString(map['userName']).isEmpty ? 'مستخدم' : _parseString(map['userName']),
-        userProfilePic: _parseString(map['userProfilePic']),
+        videoUrl: parseString(map['videoUrl']),
+        thumbnailUrl: parseString(map['thumbnailUrl']),
+        caption: parseString(map['caption']),
+        userId: parseString(map['userId']),
+        userName: parseString(map['userName']).isEmpty ? 'مستخدم' : parseString(map['userName']),
+        userProfilePic: parseString(map['userProfilePic']),
         timestamp: DateTime.now(),
-        likesCount: _parseInt(map['likesCount'] ?? map['likes'] ?? 0),
-        commentsCount: _parseInt(map['commentsCount'] ?? map['comments'] ?? 0),
-        sharesCount: _parseInt(map['sharesCount'] ?? map['shares'] ?? 0),
-        savesCount: _parseInt(map['savesCount'] ?? map['saves'] ?? 0),
+        likesCount: parseInt(map['likesCount'] ?? map['likes'] ?? 0),
+        commentsCount: parseInt(map['commentsCount'] ?? map['comments'] ?? 0),
+        sharesCount: parseInt(map['sharesCount'] ?? map['shares'] ?? 0),
+        savesCount: parseInt(map['savesCount'] ?? map['saves'] ?? 0),
+        viewsCount: parseInt(map['viewsCount'] ?? map['views'] ?? 0),
+        totalWatchTime:
+            parseInt(map['totalWatchTime'] ?? map['watchTime'] ?? 0),
         isLikedByCurrentUser: false,
+        isPrivate: map['isPrivate'] == true,
       );
     }
   }
@@ -139,6 +222,9 @@ class VideoModel {
       'commentsCount': commentsCount,
       'sharesCount': sharesCount,
       'savesCount': savesCount,
+      'viewsCount': viewsCount,
+      'totalWatchTime': totalWatchTime,
+      'isPrivate': isPrivate,
     };
   }
 
@@ -156,7 +242,11 @@ class VideoModel {
     int? commentsCount,
     int? sharesCount,
     int? savesCount,
+    int? viewsCount,
+    int? totalWatchTime,
     bool? isLikedByCurrentUser,
+    bool? isSavedByCurrentUser,
+    bool? isPrivate,
   }) {
     return VideoModel(
       id: id ?? this.id,
@@ -172,7 +262,11 @@ class VideoModel {
       commentsCount: commentsCount ?? this.commentsCount,
       sharesCount: sharesCount ?? this.sharesCount,
       savesCount: savesCount ?? this.savesCount,
+      viewsCount: viewsCount ?? this.viewsCount,
+      totalWatchTime: totalWatchTime ?? this.totalWatchTime,
       isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
+      isSavedByCurrentUser: isSavedByCurrentUser ?? this.isSavedByCurrentUser,
+      isPrivate: isPrivate ?? this.isPrivate,
     );
   }
 
@@ -193,7 +287,10 @@ class VideoModel {
         other.commentsCount == commentsCount &&
         other.sharesCount == sharesCount &&
         other.savesCount == savesCount &&
-        other.isLikedByCurrentUser == isLikedByCurrentUser;
+        other.viewsCount == viewsCount &&
+        other.totalWatchTime == totalWatchTime &&
+        other.isLikedByCurrentUser == isLikedByCurrentUser &&
+        other.isSavedByCurrentUser == isSavedByCurrentUser;
   }
 
   @override
@@ -212,7 +309,10 @@ class VideoModel {
       commentsCount,
       sharesCount,
       savesCount,
+      viewsCount,
+      totalWatchTime,
       isLikedByCurrentUser,
+      isSavedByCurrentUser,
     );
   }
 

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class PerformanceMonitor extends StatefulWidget {
   final Widget child;
@@ -20,7 +19,7 @@ class _PerformanceMonitorState extends State<PerformanceMonitor> with WidgetsBin
   double _fps = 0.0;
   double _minFps = 60.0;
   double _maxFps = 0.0;
-  List<double> _fpsHistory = [];
+  final List<double> _fpsHistory = [];
   bool _showOverlay = false;
   
   @override

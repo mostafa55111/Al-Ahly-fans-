@@ -1,0 +1,149 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+
+    "reels": {
+      ".read": true,
+      ".indexOn": ["timestamp", "userId"],
+      "$reelId": {
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || newData.child('userId').val() === auth.uid)",
+        "likes": {
+          ".write": "auth != null"
+        },
+        "likesCount": {
+          ".write": "auth != null"
+        },
+        "commentsCount": {
+          ".write": "auth != null"
+        },
+        "sharesCount": {
+          ".write": "auth != null"
+        },
+        "savesCount": {
+          ".write": "auth != null"
+        },
+        "viewsCount": {
+          ".write": "auth != null"
+        },
+        "totalWatchTime": {
+          ".write": "auth != null"
+        },
+        "comments": {
+          ".read": true,
+          ".write": "auth != null",
+          ".indexOn": ["timestamp", "parentId"],
+          "$commentId": {
+            ".write": "auth != null",
+            "likes": {
+              ".write": "auth != null"
+            },
+            "repliesCount": {
+              ".write": "auth != null"
+            }
+          }
+        }
+      }
+    },
+
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "visitors": {
+          ".indexOn": ["ts"],
+          "$visitorUid": {
+            ".write": "auth != null && (auth.uid === $visitorUid || auth.uid === $uid)"
+          }
+        }
+      }
+    },
+
+    "follows": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "user_activity": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "comments": {
+      ".read": true,
+      ".write": "auth != null",
+      ".indexOn": ["timestamp", "videoId"]
+    },
+
+    "best_player": {
+      ".read": true,
+      ".write": false
+    },
+
+    "eagle_nesr": {
+      "session_current": {
+        ".read": true,
+        ".write": false
+      },
+      "votes": {
+        "$sessionId": {
+          "$uid": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      },
+      "aggregates": {
+        ".read": true,
+        "month": {
+          "$yyyymm": {
+            "$playerId": {
+              ".write": "auth != null"
+            }
+          }
+        },
+        "season": {
+          "$seasonId": {
+            "$playerId": {
+              ".write": "auth != null"
+            }
+          }
+        }
+      },
+      "active_celebration": {
+        ".read": true,
+        ".write": false
+      }
+    },
+
+    "motm": {
+      ".read": true,
+      "$fixtureId": {
+        ".read": true,
+        ".write": "auth != null",
+        "votes": {
+          ".read": true,
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "winner": {
+          ".write": "auth != null"
+        },
+        "players": {
+          ".write": "auth != null"
+        },
+        "endsAt":     { ".write": "auth != null" },
+        "startedAt":  { ".write": "auth != null" },
+        "fixtureId":  { ".write": "auth != null" },
+        "opponent":   { ".write": "auth != null" },
+        "opponentLogo": { ".write": "auth != null" },
+        "isAhlyHome": { ".write": "auth != null" }
+      }
+    }
+  }
+}

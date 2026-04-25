@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter/foundation.dart';
 
 class VideoCacheManager extends CacheManager with ImageCacheManager {
   static const key = 'videoCache';
-  static const _maxCacheSize = 500 * 1024 * 1024; // 500MB
   static const _maxCacheObjects = 100;
 
   static VideoCacheManager? _instance;
@@ -23,7 +23,6 @@ class VideoCacheManager extends CacheManager with ImageCacheManager {
     ),
   );
 
-  @override
   Future<String> getFilePath() async {
     final directory = await getTemporaryDirectory();
     return path.join(directory.path, key);
@@ -78,7 +77,7 @@ class VideoCacheManager extends CacheManager with ImageCacheManager {
         final cachedPath = await cacheVideo(url);
         results[url] = cachedPath;
       } catch (e) {
-        print('Failed to preload video $url: $e');
+        debugPrint('Failed to preload video $url: $e');
         results[url] = url; // Fallback to original URL
       }
     }
@@ -91,7 +90,7 @@ class VideoCacheManager extends CacheManager with ImageCacheManager {
     try {
       await emptyCache();
     } catch (e) {
-      print('Failed to clear cache: $e');
+      debugPrint('Failed to clear cache: $e');
     }
   }
 

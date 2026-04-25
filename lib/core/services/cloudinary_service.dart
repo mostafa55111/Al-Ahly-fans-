@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class CloudinaryService {
   final String cloudName = 'dubc6k1iy';
@@ -13,15 +14,15 @@ class CloudinaryService {
     try {
       // Test internet connection first
       try {
-        final result = await InternetAddress.lookup('google.com');
-        print("Internet OK");
+        await InternetAddress.lookup('google.com');
+        debugPrint("Internet OK");
       } catch (e) {
-        print("No Internet: $e");
+        debugPrint("No Internet: $e");
         throw Exception("No internet connection: $e");
       }
 
       // Credentials Check
-      print("Cloudinary Config - cloud_name: $cloudName, upload_preset: $uploadPreset");
+      debugPrint("Cloudinary Config - cloud_name: $cloudName, upload_preset: $uploadPreset");
 
       // Try upload preset first
       final url = Uri.parse(
@@ -35,24 +36,57 @@ class CloudinaryService {
       final response = await request.send().timeout(
         const Duration(seconds: 30),
         onTimeout: () {
-          print("UPLOAD ERROR: Connection timed out after 30 seconds.");
+          debugPrint("UPLOAD ERROR: Connection timed out after 30 seconds.");
           throw Exception("Cloudinary connection timed out.");
         },
       );
       final res = await http.Response.fromStream(response);
 
-      print("Upload response: ${res.body}");
+      debugPrint("Upload response: ${res.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(res.body);
         return data['secure_url'];
       } else {
-        print("Upload preset failed, trying signed upload...");
+        debugPrint("Upload preset failed, trying signed upload...");
         return await _uploadVideoSigned(file);
       }
     } catch (e) {
-      print("Upload preset failed: $e, trying signed upload...");
+      debugPrint("Upload preset failed: $e, trying signed upload...");
       return await _uploadVideoSigned(file);
+    }
+  }
+
+  /// رفع صورة/GIF للـ Cloudinary — يرجع `secure_url`.
+  /// ═══════════════════════════════════════════════════════════════
+  /// يُستخدم في مرفقات التعليقات (image/gif).
+  /// - `resourceType` يحدّد نوع المورد (image أو video).
+  Future<String> uploadImage(File file, {String resourceType = 'image'}) async {
+    try {
+      final url = Uri.parse(
+        "https://api.cloudinary.com/v1_1/$cloudName/$resourceType/upload",
+      );
+      final request = http.MultipartRequest("POST", url)
+        ..fields['upload_preset'] = uploadPreset
+        ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception("Cloudinary image upload timed out.");
+        },
+      );
+      final res = await http.Response.fromStream(response);
+      debugPrint("Image upload response: ${res.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return data['secure_url'] ?? '';
+      }
+      throw Exception("Image upload failed: ${res.statusCode}");
+    } catch (e) {
+      debugPrint("Image upload error: $e");
+      rethrow;
     }
   }
 
@@ -73,7 +107,7 @@ class CloudinaryService {
     final response = await request.send();
     final res = await http.Response.fromStream(response);
 
-    print("Signed upload response: ${res.body}");
+    debugPrint("Signed upload response: ${res.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(res.body);

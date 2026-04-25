@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/reels_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/matches/presentation/pages/matches_screen.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/presentation/pages/crowd_screen.dart';
 import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/profile_screen.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/bloc/reels_bloc.dart';
-import 'package:gomhor_alahly_clean_new/features/matches/presentation/bloc/matches_bloc.dart';
 import 'package:gomhor_alahly_clean_new/core/di/service_locator_improved.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -47,11 +46,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             lazy: false, // Load immediately for better UX
             child: const ReelsScreen(),
           ),
-          BlocProvider(
-            create: (_) => getIt<MatchesBloc>(),
-            lazy: false, // Load immediately for better UX
-            child: MatchesScreen(),
-          ),
+          const CrowdScreen(),
           const ProfileScreen(),
         ],
       ),
@@ -89,9 +84,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: 'الريلز',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.sports_soccer_outlined),
-              activeIcon: Icon(Icons.sports_soccer),
-              label: 'المباريات',
+              icon: Icon(Icons.people_alt_outlined),
+              activeIcon: Icon(Icons.people_alt),
+              label: 'الجمهور',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),

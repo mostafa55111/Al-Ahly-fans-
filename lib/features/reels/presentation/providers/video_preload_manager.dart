@@ -215,7 +215,7 @@ class VideoPreloadManager extends ChangeNotifier {
       _disposeController(key);
     }
     
-    debugPrint('🎥 CLEANUP COMPLETE: ${_controllers.length}/${_maxControllers} controllers active');
+    debugPrint('🎥 CLEANUP COMPLETE: ${_controllers.length}/$_maxControllers controllers active');
   }
 
   /// Dispose all controllers

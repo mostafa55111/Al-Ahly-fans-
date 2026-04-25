@@ -19,6 +19,12 @@ import 'package:gomhor_alahly_clean_new/features/reels/presentation/bloc/reels_b
 import 'package:gomhor_alahly_clean_new/features/matches/data/datasources/best_player_remote_data_source.dart';
 import 'package:gomhor_alahly_clean_new/features/matches/presentation/bloc/matches_bloc.dart';
 import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
+import 'package:gomhor_alahly_clean_new/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:gomhor_alahly_clean_new/features/auth/domain/repositories/auth_repository.dart';
+import 'package:gomhor_alahly_clean_new/core/time/egypt_server_time_service.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/data/repositories/crowd_repository_impl.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/domain/repositories/crowd_repository.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/services/celebration_seen_store.dart';
 
 
 /// الحصول على نسخة من Service Locator
@@ -46,6 +52,14 @@ Future<void> setupServiceLocator() async {
     CloudinaryService(),
   );
 
+  /// تسجيل Auth Repository (واجهة المصادقة)
+  getIt.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      firebaseAuth: getIt<FirebaseAuth>(),
+      database: getIt<FirebaseDatabase>(),
+    ),
+  );
+
   /// تسجيل Firebase Storage
   getIt.registerSingleton<FirebaseStorage>(
     FirebaseStorage.instance,
@@ -70,8 +84,18 @@ Future<void> setupServiceLocator() async {
   final prefs = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(prefs);
 
+  /// وقت الخادم (Offset من Realtime DB) + عرض +3 اختياري
+  getIt.registerLazySingleton<EgyptServerTimeService>(
+    () => EgyptServerTimeService(),
+  );
+  getIt.registerLazySingleton<CrowdRepository>(
+    () => CrowdRepositoryImpl(getIt<FirebaseDatabase>()),
+  );
+  getIt.registerLazySingleton<CelebrationSeenStore>(
+    () => CelebrationSeenStore(getIt<SharedPreferences>()),
+  );
+
   // ===== Repository Services =====
-  final currentUserId = getIt<FirebaseAuth>().currentUser?.uid ?? '';
 
   /// تسجيل Cloudinary Service (temporarily disabled)
   // getIt.registerLazySingleton<CloudinaryService>(
@@ -93,10 +117,6 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<BestPlayerRemoteDataSource>(
     () => BestPlayerRemoteDataSource(),
   );
-  getIt.registerFactory<MatchesBloc>(
-    () => MatchesBloc(dataSource: getIt<BestPlayerRemoteDataSource>()),
-  );
-
   // ===== BLoC Services =====
 
   /// تسجيل BLoCs

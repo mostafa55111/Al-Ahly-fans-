@@ -65,7 +65,7 @@ class _ReelItemState extends State<ReelItem> with SingleTickerProviderStateMixin
           });
         }
       } catch (e) {
-        print('🎬 FOLLOW ERROR: Failed to check follow status - $e');
+        debugPrint(' FOLLOW ERROR: Failed to check follow status - $e');
       }
     }
   }
@@ -98,9 +98,9 @@ class _ReelItemState extends State<ReelItem> with SingleTickerProviderStateMixin
         _isFollowing = !_isFollowing;
       });
 
-      print('🎬 FOLLOW: Successfully ${_isFollowing ? 'followed' : 'unfollowed'} user ${widget.reel.userId}');
+      debugPrint(' FOLLOW: Successfully ${_isFollowing ? 'followed' : 'unfollowed'} user ${widget.reel.userId}');
     } catch (e) {
-      print('🎬 FOLLOW ERROR: Failed to toggle follow - $e');
+      debugPrint(' FOLLOW ERROR: Failed to toggle follow - $e');
     }
   }
 

@@ -1,66 +1,67 @@
 #!/usr/bin/env dart
 
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 /// Script to analyze VideoPlayerController lifecycle logs
 /// Usage: dart analyze_controller_logs.dart <log_file_path>
 
 void main(List<String> args) {
   if (args.isEmpty) {
-    print('Usage: dart analyze_controller_logs.dart <log_file_path>');
+    debugPrint('Usage: dart analyze_controller_logs.dart <log_file_path>');
     exit(1);
   }
 
   final logFile = File(args[0]);
   if (!logFile.existsSync()) {
-    print('Error: Log file not found: ${args[0]}');
+    debugPrint('Error: Log file not found: ${args[0]}');
     exit(1);
   }
 
   final logs = logFile.readAsLinesSync();
   final analysis = analyzeLogs(logs);
   
-  print('\n🎥 VideoPlayerController Lifecycle Analysis\n');
-  print('=' * 50);
+  debugPrint('\nVideoPlayerController Lifecycle Analysis\n');
+  debugPrint('=' * 50);
   
-  print('\n📊 Summary:');
-  print('- Total logs processed: ${logs.length}');
-  print('- Controller creations: ${analysis.creations}');
-  print('- Controller disposals: ${analysis.disposals}');
-  print('- Index changes: ${analysis.indexChanges}');
-  print('- Peak controller count: ${analysis.peakControllerCount}');
-  print('- Final controller count: ${analysis.finalControllerCount}');
+  debugPrint('\nSummary:');
+  debugPrint('- Total logs processed: ${logs.length}');
+  debugPrint('- Controller creations: ${analysis.creations}');
+  debugPrint('- Controller disposals: ${analysis.disposals}');
+  debugPrint('- Index changes: ${analysis.indexChanges}');
+  debugPrint('- Peak controller count: ${analysis.peakControllerCount}');
+  debugPrint('- Final controller count: ${analysis.finalControllerCount}');
   
-  print('\n✅ Health Check:');
-  print('- Max controllers exceeded: ${analysis.maxControllersExceeded ? '❌ YES' : '✅ NO'}');
-  print('- Disposal failures: ${analysis.disposalFailures}');
-  print('- Memory leaks detected: ${analysis.memoryLeaksDetected ? '❌ YES' : '✅ NO'}');
-  print('- Performance issues: ${analysis.performanceIssues}');
+  debugPrint('\nHealth Check:');
+  debugPrint('- Max controllers exceeded: ${analysis.maxControllersExceeded ? 'YES' : 'NO'}');
+  debugPrint('- Disposal failures: ${analysis.disposalFailures}');
+  debugPrint('- Memory leaks detected: ${analysis.memoryLeaksDetected ? 'YES' : 'NO'}');
+  debugPrint('- Performance issues: ${analysis.performanceIssues}');
   
   if (analysis.issues.isNotEmpty) {
-    print('\n🚨 Issues Found:');
+    debugPrint('\nIssues Found:');
     for (final issue in analysis.issues) {
-      print('  - $issue');
+      debugPrint('  - $issue');
     }
   }
   
   if (analysis.warnings.isNotEmpty) {
-    print('\n⚠️ Warnings:');
+    debugPrint('\nWarnings:');
     for (final warning in analysis.warnings) {
-      print('  - $warning');
+      debugPrint('  - $warning');
     }
   }
   
-  print('\n📈 Controller Timeline:');
+  debugPrint('\nController Timeline:');
   for (final event in analysis.timeline.take(20)) {
-    print('  ${event.time.padRight(12)} ${event.type.padRight(20)} ${event.description}');
+    debugPrint('  ${event.time.padRight(12)} ${event.type.padRight(20)} ${event.description}');
   }
   if (analysis.timeline.length > 20) {
-    print('  ... and ${analysis.timeline.length - 20} more events');
+    debugPrint('  ... and ${analysis.timeline.length - 20} more events');
   }
   
-  print('\n🎯 Recommendation:');
-  print(analysis.recommendation);
+  debugPrint('\nRecommendation:');
+  debugPrint(analysis.recommendation);
 }
 
 class LogAnalysis {

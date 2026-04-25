@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gomhor_alahly_clean_new/core/di/service_locator_improved.dart';
 import 'package:gomhor_alahly_clean_new/features/matches/presentation/bloc/matches_bloc.dart';
-import 'package:get_it/get_it.dart';
 
 /// Matches Screen - displays best players data
 class MatchesScreen extends StatefulWidget {
@@ -17,7 +16,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
   void initState() {
     super.initState();
     // Trigger load event
-    context.read<MatchesBloc>().add(LoadBestPlayersEvent());
+    context.read<MatchesBloc>().add(const LoadBestPlayersEvent());
   }
 
   @override

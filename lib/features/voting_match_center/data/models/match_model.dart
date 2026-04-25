@@ -9,6 +9,12 @@ class MatchModel {
   final String? homeScore;
   final String? awayScore;
   final String? eagleOfTheMatchPlayerId;
+  final String? tournament;
+  final String? homeTeamLogo;
+  final String? awayTeamLogo;
+  final List<String>? homeTeamLineup;
+  final List<String>? awayTeamLineup;
+  final bool isFinished;
 
   MatchModel({
     required this.id,
@@ -19,7 +25,16 @@ class MatchModel {
     this.homeScore,
     this.awayScore,
     this.eagleOfTheMatchPlayerId,
+    this.tournament,
+    this.homeTeamLogo,
+    this.awayTeamLogo,
+    this.homeTeamLineup,
+    this.awayTeamLineup,
+    this.isFinished = false,
   });
+
+  // Add getters for backward compatibility
+  DateTime get startTime => matchTime;
 
   factory MatchModel.fromSnapshot(DataSnapshot snapshot) {
     final data = snapshot.value as Map<dynamic, dynamic>;
@@ -32,6 +47,12 @@ class MatchModel {
       homeScore: data['homeScore'] as String?,
       awayScore: data['awayScore'] as String?,
       eagleOfTheMatchPlayerId: data['eagleOfTheMatchPlayerId'] as String?,
+      tournament: data['tournament'] as String?,
+      homeTeamLogo: data['homeTeamLogo'] as String?,
+      awayTeamLogo: data['awayTeamLogo'] as String?,
+      homeTeamLineup: (data['homeTeamLineup'] as List<dynamic>?)?.cast<String>(),
+      awayTeamLineup: (data['awayTeamLineup'] as List<dynamic>?)?.cast<String>(),
+      isFinished: data['isFinished'] as bool? ?? false,
     );
   }
 
@@ -45,6 +66,12 @@ class MatchModel {
       homeScore: data['homeScore'] as String?,
       awayScore: data['awayScore'] as String?,
       eagleOfTheMatchPlayerId: data['eagleOfTheMatchPlayerId'] as String?,
+      tournament: data['tournament'] as String?,
+      homeTeamLogo: data['homeTeamLogo'] as String?,
+      awayTeamLogo: data['awayTeamLogo'] as String?,
+      homeTeamLineup: (data['homeTeamLineup'] as List<dynamic>?)?.cast<String>(),
+      awayTeamLineup: (data['awayTeamLineup'] as List<dynamic>?)?.cast<String>(),
+      isFinished: data['isFinished'] as bool? ?? false,
     );
   }
 

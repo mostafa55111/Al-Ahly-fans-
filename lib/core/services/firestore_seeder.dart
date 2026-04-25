@@ -1,15 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service to seed Firestore with sample reel data for testing
 class FirestoreSeeder {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   /// Seed Firestore with sample reel data
   Future<void> seedSampleReels() async {
     try {
-      print('🌱 Seeding Firestore with sample reels...');
+      debugPrint('🌱 Seeding Firestore with sample reels...');
       
       final sampleReels = [
         {
@@ -158,12 +157,12 @@ class FirestoreSeeder {
       for (int i = 0; i < sampleReels.length; i++) {
         final reelData = sampleReels[i];
         await _firestore.collection('reels').add(reelData);
-        print('🌱 Added sample reel ${i + 1}/10');
+        debugPrint('🌱 Added sample reel ${i + 1}/10');
       }
 
-      print('✅ Successfully seeded Firestore with ${sampleReels.length} sample reels!');
+      debugPrint('✅ Successfully seeded Firestore with ${sampleReels.length} sample reels!');
     } catch (e) {
-      print('❌ Error seeding Firestore: $e');
+      debugPrint('❌ Error seeding Firestore: $e');
       rethrow;
     }
   }
@@ -171,7 +170,7 @@ class FirestoreSeeder {
   /// Clear all sample data from Firestore
   Future<void> clearSampleData() async {
     try {
-      print('🧹 Clearing sample data from Firestore...');
+      debugPrint('🧹 Clearing sample data from Firestore...');
       
       final reelsSnapshot = await _firestore.collection('reels').get();
       
@@ -179,9 +178,9 @@ class FirestoreSeeder {
         await doc.reference.delete();
       }
       
-      print('✅ Cleared ${reelsSnapshot.docs.length} reels from Firestore');
+      debugPrint('✅ Cleared ${reelsSnapshot.docs.length} reels from Firestore');
     } catch (e) {
-      print('❌ Error clearing sample data: $e');
+      debugPrint('❌ Error clearing sample data: $e');
       rethrow;
     }
   }
@@ -192,7 +191,7 @@ class FirestoreSeeder {
       final snapshot = await _firestore.collection('reels').limit(1).get();
       return snapshot.docs.isNotEmpty;
     } catch (e) {
-      print('❌ Error checking sample data: $e');
+      debugPrint('❌ Error checking sample data: $e');
       return false;
     }
   }

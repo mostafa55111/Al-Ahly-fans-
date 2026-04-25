@@ -91,14 +91,14 @@ class _CachedVideoPlayerState extends State<CachedVideoPlayer> {
         // Use cached file
         _cachedPath = cachedPath;
         _controller = VideoPlayerController.file(
-          await _getCachedFile(cachedPath),
+          _getCachedFile(cachedPath),
         );
         debugPrint('🎬 CACHED PLAYER: Using cached video: ${widget.videoUrl}');
       } else {
         // Cache and play
         _cachedPath = await widget.cacheManager.cacheVideo(widget.videoUrl);
         _controller = VideoPlayerController.file(
-          await _getCachedFile(_cachedPath!),
+          _getCachedFile(_cachedPath!),
         );
         debugPrint('🎬 CACHED PLAYER: Cached and playing video: ${widget.videoUrl}');
       }
@@ -134,7 +134,7 @@ class _CachedVideoPlayerState extends State<CachedVideoPlayer> {
         });
       }
     } catch (e) {
-      print('Error initializing video: $e');
+      debugPrint('Error initializing video: $e');
       if (mounted && !_isDisposed) {
         setState(() {
           _isLoading = false;
@@ -194,12 +194,7 @@ class _CachedVideoPlayerState extends State<CachedVideoPlayer> {
     }
   }
 
-  Future<void> _playVideo() async {
-    if (_controller != null && _isInitialized && !_isPlaying && !_isDisposed) {
-      await _controller!.play();
-    }
-  }
-
+  
   Future<void> _pauseVideo() async {
     if (_controller != null && _isInitialized && _isPlaying && !_isDisposed) {
       await _controller!.pause();

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gomhor_alahly_clean_new/core/animations/advanced_animations.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/reels_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/marketplace/presentation/pages/marketplace_screen.dart';
-import 'package:gomhor_alahly_clean_new/features/bus_booking/presentation/pages/bus_booking_screen.dart';
 import 'package:gomhor_alahly_clean_new/features/voting_match_center/presentation/pages/match_center_screen.dart';
 import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/profile_screen.dart';
 
@@ -14,13 +12,11 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 4; // يبدأ على البروفايل كما طلب المستخدم
+  int _selectedIndex = 2; // يبدأ على البروفايل كما طلب المستخدم
 
   final List<Widget> _screens = [
     const ReelsScreen(),
     const MatchCenterScreen(), // شاشة التصويت والجمهور
-    const MarketplaceScreen(),
-    const BusBookingScreen(), // شاشة الترحال
     const ProfileScreen(),
   ];
 
@@ -64,11 +60,9 @@ class _MainNavigationState extends State<MainNavigation> {
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
-            _buildNavItem(Icons.video_library_rounded, 'الريلز', 0),
-            _buildNavItem(Icons.how_to_vote_rounded, 'التصويت', 1),
-            _buildNavItem(Icons.shopping_cart_rounded, 'المتجر', 2),
-            _buildNavItem(Icons.directions_bus_rounded, 'الترحال', 3),
-            _buildNavItem(Icons.person_rounded, 'البروفايل', 4),
+            _buildNavItem(Icons.video_library_rounded, 'Reels', 0),
+            _buildNavItem(Icons.how_to_vote_rounded, 'Voting', 1),
+            _buildNavItem(Icons.person_rounded, 'Profile', 2),
           ],
         ),
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/domain/entities/video_entity.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ReelSideActions extends StatelessWidget {
   final VideoEntity reel;

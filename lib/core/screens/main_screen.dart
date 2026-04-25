@@ -58,10 +58,10 @@ class _MainScreenState extends State<MainScreen> {
         ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.black.withValues(alpha: 0.8),
           border: Border(
             top: BorderSide(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               width: 0.5,
             ),
           ),
@@ -82,7 +82,7 @@ class _MainScreenState extends State<MainScreen> {
           elevation: 0,
           type: BottomNavigationBarType.fixed,
           selectedItemColor: Colors.red,
-          unselectedItemColor: Colors.white.withOpacity(0.6),
+          unselectedItemColor: Colors.white.withValues(alpha: 0.6),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.video_library_outlined),

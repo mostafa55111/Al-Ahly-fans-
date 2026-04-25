@@ -8,7 +8,7 @@ import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/erro
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/cache_info_widget.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/providers/video_preload_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'dart:io'; // For File type in upload
+// For File type in upload
 
 class ReelsScreenNew extends StatefulWidget {
   const ReelsScreenNew({super.key});
@@ -26,8 +26,6 @@ class _ReelsScreenStateNew extends State<ReelsScreenNew> {
 
   // Get current user ID (replace with actual auth service integration)
   String get _currentUserId => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_user';
-  String get _currentUserName => FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous';
-  String get _currentUserProfilePic => FirebaseAuth.instance.currentUser?.photoURL ?? '';
 
   @override
   void initState() {

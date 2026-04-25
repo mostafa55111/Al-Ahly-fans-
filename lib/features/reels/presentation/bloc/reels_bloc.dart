@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
@@ -22,7 +23,7 @@ class ReelsBloc extends Bloc<ReelsEvent, ReelsState> {
   })  : _videoRepository = videoRepository,
         _getReels = GetReels(videoRepository),
         super(ReelsInitial()) {
-    print("DEBUG: ReelsBloc CREATED");
+    debugPrint("DEBUG: ReelsBloc CREATED");
     on<LoadReelsEvent>(_onLoadReels);
     on<LoadMoreReelsEvent>(_onLoadMoreReels);
     on<ToggleLikeEvent>(_onToggleLike);
@@ -65,7 +66,7 @@ class ReelsBloc extends Bloc<ReelsEvent, ReelsState> {
 
   Future<void> _onLoadReels(
       LoadReelsEvent event, Emitter<ReelsState> emit) async {
-    print("🎬 BLOC: LoadReelsEvent TRIGGERED");
+    debugPrint(" BLOC: LoadReelsEvent TRIGGERED");
     if (_isLoading) return;
     
     _isLoading = true;
@@ -74,7 +75,7 @@ class ReelsBloc extends Bloc<ReelsEvent, ReelsState> {
     emit(const ReelsLoading());
     
     try {
-      print("🎬 BLOC: Fetching reels from Repository with timeout...");
+      debugPrint(" BLOC: Fetching reels from Repository with timeout...");
       
       // Add timeout to the entire fetch operation
       final result = await _getReels.call().timeout(
@@ -88,21 +89,21 @@ class ReelsBloc extends Bloc<ReelsEvent, ReelsState> {
       _hasMore = result.length >= 10;
       _isLoading = false;
       
-      print("🎬 BLOC: ✅ Reels fetched successfully, count: ${result.length}");
+      debugPrint(" BLOC: Reels fetched successfully, count: ${result.length}");
       
       if (result.isEmpty) {
-        emit(ReelsEmpty('لا توجد ريلز متاحة حالياً'));
+        emit(const ReelsEmpty('لا توجد ريلز متاحة حالياً'));
       } else {
         emit(ReelsLoaded(_currentReels, hasMore: _hasMore));
       }
     } on TimeoutException catch (e) {
       _isLoading = false;
-      print('🎬 BLOC: ❌ TIMEOUT ERROR: ${e.message}');
-      emit(ReelsError('انتهت مهلة الاتصال. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.'));
+      debugPrint(' BLOC: TIMEOUT ERROR: ${e.message}');
+      emit(const ReelsError('Connection timeout. Please check your internet connection and try again.'));
     } catch (e, stackTrace) {
       _isLoading = false;
-      print('🎬 BLOC: ❌ ERROR: Failed to load reels: $e');
-      print('🎬 BLOC: ❌ Stack trace: $stackTrace');
+      debugPrint(' BLOC: ERROR: Failed to load reels: $e');
+      debugPrint(' BLOC: Stack trace: $stackTrace');
       
       // Always emit a state, never leave it hanging
       if (_currentReels.isNotEmpty) {
@@ -230,12 +231,12 @@ class ReelsBloc extends Bloc<ReelsEvent, ReelsState> {
   Future<void> _onUploadVideo(
       UploadVideoEvent event, Emitter<ReelsState> emit) async {
     try {
-      emit(ReelsLoading());
+      emit(const ReelsLoading());
       
-      print("🎬 UPLOAD: Starting video upload process...");
+      debugPrint(" UPLOAD: Starting video upload process...");
       
       final url = await _videoRepository.uploadVideo(event.file);
-      print("🎬 UPLOAD: Cloudinary upload complete → $url");
+      debugPrint(" UPLOAD: Cloudinary upload complete -> $url");
       
       // Create VideoEntity with current user info
       final newVideo = VideoEntity(
@@ -249,13 +250,13 @@ class ReelsBloc extends Bloc<ReelsEvent, ReelsState> {
       );
 
       await _videoRepository.saveReel(newVideo);
-      print("🎬 UPLOAD: Firebase save complete");
+      debugPrint(" UPLOAD: Firebase save complete");
       
-      print("🎬 UPLOAD: Refreshing reels list...");
+      debugPrint(" UPLOAD: Refreshing reels list...");
       add(const LoadReelsEvent());
       
     } catch (e) {
-      print("🎬 UPLOAD ERROR: $e");
+      debugPrint(" UPLOAD ERROR: $e");
       
       String errorMessage = 'Upload failed';
       
