@@ -282,6 +282,41 @@ class MotmVotingCubit extends Cubit<MotmVotingState> {
   }
 
   // ──────────────────────────────────────────────
+  // أدمن — إنشاء جلسة تصويت يدوياً (لوحة CMS)
+  // ──────────────────────────────────────────────
+
+  /// إنشاء/استبدال جلسة `motm/{fixtureId}` مع لاعبين محددين وزمن إغلاق.
+  Future<void> adminSeedMotmSession({
+    required int fixtureId,
+    required List<LineupPlayer> players,
+    int votingDurationMinutes = 60,
+  }) async {
+    if (players.isEmpty) {
+      throw Exception('اختر لاعباً واحداً على الأقل');
+    }
+    final endsAt = DateTime.now()
+        .add(Duration(minutes: votingDurationMinutes))
+        .millisecondsSinceEpoch;
+    final ref = _db.ref('motm/$fixtureId');
+    await ref.set({
+      'fixtureId': fixtureId,
+      'startedAt': ServerValue.timestamp,
+      'endsAt': endsAt,
+      'opponent': '',
+      'players': {
+        for (final p in players)
+          if (p.id != null)
+            '${p.id}': {
+              'name': p.name,
+              'number': p.number,
+              'position': p.position,
+              'photo': p.photo ?? '',
+            },
+      },
+    });
+  }
+
+  // ──────────────────────────────────────────────
   // Cleanup
   // ──────────────────────────────────────────────
 

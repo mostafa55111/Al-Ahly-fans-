@@ -1,0 +1,59 @@
+// Firebase RTDB — sharded voting (merge with existing match_votes / awards rules)
+// Club isolation: $club must match authenticated app scope in production.
+
+{
+  "rules": {
+    "match_vote_shards": {
+      "$club": {
+        "$matchId": {
+          ".read": "auth != null",
+          "$playerId": {
+            "$shardId": {
+              "count": {
+                ".write": "auth != null && root.child('match_votes').child($club).child('active_match').child('awardsFinalized').val() != true && root.child('match_votes').child($club).child('active_match').child('votingEnabled').val() == true",
+                ".validate": "newData.isNumber()"
+              }
+            }
+          }
+        }
+      }
+    },
+    "match_votes": {
+      "$club": {
+        "user_votes": {
+          "$matchId": {
+            "$uid": {
+              ".read": "auth != null && auth.uid == $uid",
+              ".write": "auth != null && auth.uid == $uid && !data.exists()",
+              ".validate": "newData.hasChildren(['votedPlayerId', 'timestamp'])"
+            }
+          }
+        },
+        "active_match": {
+          "awardsFinalized": {
+            ".write": false
+          }
+        },
+        "players": {
+          "$playerId": {
+            "votes": {
+              ".write": "auth != null && root.child('admins').child(auth.uid).val() == true"
+            }
+          }
+        }
+      }
+    },
+    "awards": {
+      "$club": {
+        "matches": {
+          "$year": {
+            "$matchId": {
+              ".read": "auth != null",
+              ".write": "auth != null && root.child('admins').child(auth.uid).val() == true && !data.exists()"
+            }
+          }
+        }
+      }
+    }
+  }
+}

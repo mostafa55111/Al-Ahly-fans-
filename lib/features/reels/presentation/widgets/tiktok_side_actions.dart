@@ -1,11 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
 
 /// أزرار التفاعل الجانبية بأسلوب تيك توك:
 /// صورة المستخدم + زر متابعة + إعجاب + تعليق + حفظ + مشاركة
+/// (مغلفة بـ [Semantics] و[Tooltip] لاختبارات الوصول مثل Firebase Robo).
 class TikTokSideActions extends StatelessWidget {
   /// UID صاحب الريل — يُستخدم لجلب أحدث صورة بروفايل من `/users/{uid}/profilePic`
   /// لو الصورة المحفوظة مع الريل كانت فاضية.
@@ -52,12 +54,10 @@ class TikTokSideActions extends StatelessWidget {
       children: [
         _buildProfileAvatar(),
         const SizedBox(height: 22),
-        _ActionButton(
-          icon: isLiked ? Icons.favorite : Icons.favorite_border,
-          iconColor: isLiked ? AppColors.brightRed : Colors.white,
-          count: _formatCount(likesCount),
-          onTap: onLike,
-          scale: isLiked ? 1.05 : 1.0,
+        _PulseLikeAction(
+          isLiked: isLiked,
+          likesLabel: _formatCount(likesCount),
+          onLike: onLike,
         ),
         const SizedBox(height: 18),
         // أيقونة التعليق بستايل تيك توك — فقاعة حوار outlined بنهاية (tail)
@@ -66,6 +66,8 @@ class TikTokSideActions extends StatelessWidget {
           iconColor: Colors.white,
           count: _formatCount(commentsCount),
           onTap: onComment,
+          semanticsLabel: 'التعليقات، ${_formatCount(commentsCount)} تعليق',
+          tooltip: 'عرض التعليقات',
         ),
         const SizedBox(height: 18),
         _ActionButton(
@@ -74,6 +76,10 @@ class TikTokSideActions extends StatelessWidget {
           count: _formatCount(savesCount),
           onTap: onSave,
           scale: isSaved ? 1.08 : 1.0,
+          semanticsLabel: isSaved
+              ? 'إلغاء حفظ الريل، ${_formatCount(savesCount)} محفوظ'
+              : 'حفظ الريل، ${_formatCount(savesCount)} محفوظ',
+          tooltip: isSaved ? 'إلغاء حفظ الريل' : 'حفظ الريل',
         ),
         const SizedBox(height: 18),
         _ActionButton(
@@ -81,6 +87,8 @@ class TikTokSideActions extends StatelessWidget {
           iconColor: Colors.white,
           count: _formatCount(sharesCount),
           onTap: onShare,
+          semanticsLabel: 'مشاركة الريل، ${_formatCount(sharesCount)} مشاركة',
+          tooltip: 'مشاركة الريل',
         ),
         const SizedBox(height: 18),
         _buildSpinningDisc(),
@@ -97,21 +105,28 @@ class TikTokSideActions extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          GestureDetector(
-            onTap: onProfileTap,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: ClipOval(
-                child: _ReelAuthorAvatar(
-                  userId: userId,
-                  initialProfilePic: userProfilePic,
-                  placeholder: _placeholderAvatar(),
+          Tooltip(
+            message: 'فتح بروفايل صاحب الريل',
+            child: Semantics(
+              label: 'فتح بروفايل صاحب الريل',
+              button: true,
+              child: GestureDetector(
+                onTap: onProfileTap,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: _ReelAuthorAvatar(
+                      userId: userId,
+                      initialProfilePic: userProfilePic,
+                      placeholder: _placeholderAvatar(),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -119,22 +134,30 @@ class TikTokSideActions extends StatelessWidget {
           if (!isFollowing)
             Positioned(
               bottom: -2,
-              child: GestureDetector(
-                onTap: onFollow,
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: AppColors.royalRed,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.royalRed.withValues(alpha: 0.45),
-                        blurRadius: 10,
+              child: Tooltip(
+                message: 'متابعة صاحب الريل',
+                child: Semantics(
+                  label: 'متابعة صاحب الريل',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: onFollow,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: AppColors.royalRed,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.royalRed.withValues(alpha: 0.45),
+                            blurRadius: 10,
+                          ),
+                        ],
                       ),
-                    ],
+                      child:
+                          const Icon(Icons.add, color: Colors.white, size: 16),
+                    ),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 16),
                 ),
               ),
             ),
@@ -187,6 +210,100 @@ class TikTokSideActions extends StatelessWidget {
     if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
     if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}K';
     return count.toString();
+  }
+}
+
+/// نبضة قلب على زر الإعجاب — يعطي ردّة فعل فورية مع كل ضغطة (إعجاب أو إلغاء).
+class _PulseLikeAction extends StatefulWidget {
+  final bool isLiked;
+  final String likesLabel;
+  final VoidCallback onLike;
+
+  const _PulseLikeAction({
+    required this.isLiked,
+    required this.likesLabel,
+    required this.onLike,
+  });
+
+  @override
+  State<_PulseLikeAction> createState() => _PulseLikeActionState();
+}
+
+class _PulseLikeActionState extends State<_PulseLikeAction>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tip = widget.isLiked ? 'إلغاء الإعجاب' : 'إعجاب';
+    final label = widget.isLiked
+        ? 'إلغاء الإعجاب، ${widget.likesLabel} إعجاب'
+        : 'إعجاب، ${widget.likesLabel}';
+
+    return Tooltip(
+      message: tip,
+      child: Semantics(
+        label: label,
+        button: true,
+        child: GestureDetector(
+          onTap: () {
+            widget.onLike();
+            _pulse.forward(from: 0);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            children: [
+              AnimatedBuilder(
+                animation: _pulse,
+                builder: (context, _) {
+                  final t = Curves.elasticOut.transform(_pulse.value);
+                  final scale = 1.0 + 0.22 * math.sin(t * math.pi);
+                  return Transform.scale(
+                    scale: scale,
+                    child: Icon(
+                      widget.isLiked ? Icons.favorite : Icons.favorite_border,
+                      color:
+                          widget.isLiked ? AppColors.brightRed : Colors.white,
+                      size: 34,
+                      shadows: const [
+                        Shadow(color: Colors.black45, blurRadius: 8),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.likesLabel,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  shadows: [
+                    Shadow(color: Colors.black, blurRadius: 6),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -272,47 +389,58 @@ class _ActionButton extends StatelessWidget {
   final String count;
   final VoidCallback onTap;
   final double scale;
+  final String semanticsLabel;
+  final String tooltip;
 
   const _ActionButton({
     required this.icon,
     required this.iconColor,
     required this.count,
     required this.onTap,
+    required this.semanticsLabel,
+    required this.tooltip,
     this.scale = 1.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        children: [
-          AnimatedScale(
-            duration: const Duration(milliseconds: 180),
-            scale: scale,
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 34,
-              shadows: const [
-                Shadow(color: Colors.black45, blurRadius: 8),
-              ],
-            ),
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        label: semanticsLabel,
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            children: [
+              AnimatedScale(
+                duration: const Duration(milliseconds: 180),
+                scale: scale,
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 34,
+                  shadows: const [
+                    Shadow(color: Colors.black45, blurRadius: 8),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                count,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  shadows: [
+                    Shadow(color: Colors.black, blurRadius: 6),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            count,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              shadows: [
-                Shadow(color: Colors.black, blurRadius: 6),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

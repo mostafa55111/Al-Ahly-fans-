@@ -30,36 +30,38 @@ class CustomButton extends StatefulWidget {
 }
 
 class _CustomButtonState extends State<CustomButton> {
-  // final bool _isPressed = false;
-
   @override
   Widget build(BuildContext context) {
-    if (widget.isOutlined) {
-      return OutlinedButton(
-        onPressed: widget.isLoading ? null : widget.onPressed,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: widget.backgroundColor, width: 2),
-          padding: EdgeInsets.all(widget.padding),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-          ),
-        ),
-        child: _buildButtonContent(),
-      );
-    }
+    final child = widget.isOutlined
+        ? OutlinedButton(
+            onPressed: widget.isLoading ? null : widget.onPressed,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: widget.backgroundColor, width: 2),
+              padding: EdgeInsets.all(widget.padding),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+              ),
+            ),
+            child: _buildButtonContent(),
+          )
+        : ElevatedButton(
+            onPressed: widget.isLoading ? null : widget.onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.backgroundColor,
+              foregroundColor: widget.textColor,
+              padding: EdgeInsets.all(widget.padding),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+              ),
+              elevation: 4,
+            ),
+            child: _buildButtonContent(),
+          );
 
-    return ElevatedButton(
-      onPressed: widget.isLoading ? null : widget.onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: widget.backgroundColor,
-        foregroundColor: widget.textColor,
-        padding: EdgeInsets.all(widget.padding),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
-        elevation: 4,
-      ),
-      child: _buildButtonContent(),
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: Tooltip(message: widget.label, child: child),
     );
   }
 
@@ -90,31 +92,44 @@ class _CustomButtonState extends State<CustomButton> {
   }
 }
 
-/// Custom Icon Button
+/// Custom Icon Button — تسمية عربية إلزامية لاختبارات الروبوت.
 class CustomIconButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color color;
   final double size;
+  final String semanticsLabel;
   final String? tooltip;
+  /// أيقونة مخصّصة (مثل Badge) بدل الـ [Icon] الافتراضي من [icon].
+  final Widget? iconOverride;
 
   const CustomIconButton({
     super.key,
     required this.icon,
     required this.onPressed,
+    required this.semanticsLabel,
     this.color = Colors.red,
     this.size = 24,
     this.tooltip,
+    this.iconOverride,
   });
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon),
-      onPressed: onPressed,
-      color: color,
-      iconSize: size,
-      tooltip: tooltip,
+    final tip = tooltip ?? semanticsLabel;
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: Tooltip(
+        message: tip,
+        child: IconButton(
+          icon: iconOverride ?? Icon(icon),
+          onPressed: onPressed,
+          color: iconOverride == null ? color : null,
+          iconSize: iconOverride == null ? size : null,
+          tooltip: tip,
+        ),
+      ),
     );
   }
 }
@@ -122,43 +137,61 @@ class CustomIconButton extends StatelessWidget {
 /// Custom Floating Action Button
 class CustomFAB extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color backgroundColor;
   final Color foregroundColor;
+  final String semanticsLabel;
   final String? tooltip;
   final bool isExtended;
   final String? label;
+  final TextStyle? labelStyle;
+  final bool mini;
 
   const CustomFAB({
     super.key,
     required this.icon,
     required this.onPressed,
+    required this.semanticsLabel,
     this.backgroundColor = Colors.red,
     this.foregroundColor = Colors.white,
     this.tooltip,
     this.isExtended = false,
     this.label,
+    this.labelStyle,
+    this.mini = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tip = tooltip ?? label ?? semanticsLabel;
     if (isExtended && label != null) {
-      return FloatingActionButton.extended(
+      final fab = FloatingActionButton.extended(
         onPressed: onPressed,
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
         icon: Icon(icon),
-        label: Text(label!),
-        tooltip: tooltip,
+        label: Text(label!, style: labelStyle),
+        tooltip: tip,
+      );
+      return Semantics(
+        button: true,
+        label: semanticsLabel,
+        child: Tooltip(message: tip, child: fab),
       );
     }
 
-    return FloatingActionButton(
+    final fab = FloatingActionButton(
       onPressed: onPressed,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
-      tooltip: tooltip,
+      tooltip: tip,
+      mini: mini,
       child: Icon(icon),
+    );
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: Tooltip(message: tip, child: fab),
     );
   }
 }

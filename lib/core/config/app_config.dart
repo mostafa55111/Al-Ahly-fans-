@@ -32,10 +32,22 @@ class AppConfig {
   /// اسم السحابة في Cloudinary
   static const String cloudinaryCloudName = String.fromEnvironment(
     'CLOUDINARY_CLOUD_NAME',
-    defaultValue: 'dubc6k1iy',
+    defaultValue: '',
+  );
+
+  /// Upload preset (Unsigned) في Cloudinary
+  static const String cloudinaryUploadPreset = String.fromEnvironment(
+    'CLOUDINARY_UPLOAD_PRESET',
+    defaultValue: '',
   );
 
   // ===== API Endpoints =====
+
+  /// Base URL لخدمات الباك-إند الخاصة بالتطبيق (إن وجدت)
+  static const String appApiBaseUrl = String.fromEnvironment(
+    'APP_API_BASE_URL',
+    defaultValue: 'https://api.ahly-fans-app.com',
+  );
 
   /// نقطة نهاية Football API
   static const String footballApiBaseUrl = 'https://api.football-data.org/v4';
@@ -44,17 +56,50 @@ class AppConfig {
   static const String theSportDbBaseUrl =
       'https://www.thesportsdb.com/api/v1/json';
 
+  /// مفتاح TheSportsDB (الافتراضي العام المجاني "3")
+  static const String theSportDbApiKey = String.fromEnvironment(
+    'THE_SPORT_DB_API_KEY',
+    defaultValue: '3',
+  );
+
   /// نقطة نهاية Gemini API
   static const String geminiApiBaseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
+  /// اسم موديل Gemini الافتراضي
+  static const String geminiModelName = String.fromEnvironment(
+    'GEMINI_MODEL',
+    defaultValue: 'gemini-2.0-flash',
+  );
+
   // ===== Firebase Configuration =====
 
   /// معرف مشروع Firebase
-  static const String firebaseProjectId = 'gomhor-alahly';
+  static const String firebaseProjectId = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+    defaultValue: '',
+  );
 
   /// معرف التطبيق في Firebase
-  static const String firebaseAppId = 'com.alahly.gomhor';
+  static const String firebaseAppId = String.fromEnvironment(
+    'FIREBASE_APP_ID',
+    defaultValue: '',
+  );
+
+  /// قيمة حقل `app_source` في مستندات Firestore — لعزل بيانات الأهلي داخل مشروع Firebase المشترك.
+  static const String firestoreAppSource = 'gomhor_ahly';
+
+  /// علامة النادي لمجموعة ريلز Firestore للخوارزمية — يجب أن تكون `ahly` أو `zamalek`.
+  static const String reelsFirestoreClubTag = 'ahly';
+
+  /// مسار عقدة ريلز Firebase Realtime Database لهذا التطبيق.
+  static const String rtdbReelsPath = 'reels';
+
+  /// افتراض فيد «لك»: محلي بنادي التطبيق (`app_source` = الأهلي).
+  static const bool reelsDefaultGlobalAudience = false;
+
+  /// معرّف النادي المنظّم للترحال والحجوزات في هذا التطبيق.
+  static const String travelOrganizerClubId = 'ahly';
 
   // ===== App Configuration =====
 
@@ -94,6 +139,11 @@ class AppConfig {
 
   /// مهلة المراقبة (بالثواني)
   static const int monitoringTimeout = 30;
+
+  static const Duration connectTimeoutDuration =
+      Duration(seconds: connectionTimeout);
+  static const Duration receiveTimeoutDuration =
+      Duration(seconds: receiveTimeout);
 
   // ===== Pagination =====
 

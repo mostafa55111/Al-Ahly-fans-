@@ -1,13 +1,32 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gomhor_alahly_clean_new/core/branding/app_identity.dart';
 import 'package:gomhor_alahly_clean_new/core/design_system/theme/app_colors.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/fan_experience/admin_control_visual_system.dart';
 import 'package:gomhor_alahly_clean_new/core/di/service_locator_improved.dart';
+import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
 import 'package:gomhor_alahly_clean_new/core/time/egypt_server_time_service.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/owner_admin/match_control_console_page.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/data/crowd_rtdb_paths.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/data/models/eagle_session_dto.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/data/models/past_player_dto.dart';
+import 'package:gomhor_alahly_clean_new/core/config/fan_app_identity.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/domain/repositories/crowd_repository.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/owner/owner_guard.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/production_verification/dashboard/production_ops_dashboard_page.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/product_launch/release_mode_guard.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/product_launch/experimental_feature_guard.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/presentation/utils/crowd_hero_labels.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/services/crowd_admin_ai_service.dart';
+import 'package:gomhor_alahly_clean_new/features/public_arena/presentation/pages/public_arena_page.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/presentation/cubit/reels_feed_cubit.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/admin_reels_page.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CrowdAdminPage extends StatefulWidget {
   const CrowdAdminPage({super.key});
@@ -28,6 +47,7 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
   bool _isAdmin = false;
   bool _busy = false;
   bool _aiBusy = false;
+  CrowdAdminAiAction? _pendingAiAction;
 
   List<PastPlayerDto> _players = [];
   EagleSessionDto? _session;
@@ -45,7 +65,13 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
       role: _AiRole.assistant,
       text:
           'AI Assistant جاهز. أمثلة:\n'
+          '- ورّيني كروت مركز ST فقط\n'
           '- فلتر التعليقات الخارجة\n'
+          '- فعّل الترحال / عطل الريلز\n'
+          '- عمولة المنصة 10\n'
+          '- فتح شات الرحلة trip_ks_1\n'
+          '- حافلة تحركت (باص انطلق)\n'
+          '- إغلاق الرحلة\n'
           '- اديني تقرير عن أكتر الشاشات زيارة\n'
           '- احذف فيديو واخد ريبورتات كتير',
     ),
@@ -65,24 +91,13 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
   }
 
   Future<void> _bootstrap() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) {
-      if (!mounted) return;
-      setState(() {
-        _checkingAdmin = false;
-        _isAdmin = false;
-      });
-      return;
-    }
-
-    final adminSnap = await _db.ref('admins/$uid').get();
-    final isAdmin = adminSnap.exists && (adminSnap.value == true || adminSnap.value == 1);
+    final isOwner = await getIt<OwnerGuard>().canAccessAdmin(user: _auth.currentUser);
     if (!mounted) return;
     setState(() {
-      _isAdmin = isAdmin;
+      _isAdmin = isOwner;
       _checkingAdmin = false;
     });
-    if (!isAdmin) return;
+    if (!isOwner) return;
     await _loadData();
   }
 
@@ -123,26 +138,109 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
     final cardCtrl = TextEditingController(text: player?.cardUrl ?? '');
     final posCtrl = TextEditingController(text: player?.position ?? '');
     final numCtrl = TextEditingController(text: player?.number?.toString() ?? '');
+    final powerCtrl = TextEditingController(text: player?.power?.toString() ?? '');
+    final cloud = getIt<CloudinaryService>();
+    var uploading = false;
+
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF181818),
-        title: Text(player == null ? 'إضافة كارت' : 'تعديل كارت'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'اسم اللاعب')),
-              TextField(controller: posCtrl, decoration: const InputDecoration(labelText: 'المركز مثل gk/cb/st')),
-              TextField(controller: numCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'رقم اللاعب (اختياري)')),
-              TextField(controller: cardCtrl, decoration: const InputDecoration(labelText: 'رابط الكارت cardUrl')),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setLocal) {
+          Future<void> pickAndUpload() async {
+            final picker = ImagePicker();
+            final x = await picker.pickImage(
+              source: ImageSource.gallery,
+              imageQuality: 88,
+            );
+            if (x == null || !dialogCtx.mounted) return;
+            if (!cloud.isReady) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cloudinary غير جاهز — راجع الإعدادات')),
+              );
+              return;
+            }
+            setLocal(() => uploading = true);
+            try {
+              final url = await cloud.uploadImage(File(x.path));
+              if (url.isNotEmpty && dialogCtx.mounted) {
+                cardCtrl.text = url;
+              }
+            } finally {
+              if (dialogCtx.mounted) setLocal(() => uploading = false);
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: const Color(0xFF181818),
+            title: Text(player == null ? 'إضافة كارت' : 'تعديل كارت'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'اسم اللاعب'),
+                  ),
+                  TextField(
+                    controller: posCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'المركز (مثل gk / cb / st)',
+                    ),
+                  ),
+                  TextField(
+                    controller: numCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'رقم اللاعب (اختياري)',
+                    ),
+                  ),
+                  TextField(
+                    controller: powerCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'القوة power (اختياري)',
+                    ),
+                  ),
+                  TextField(
+                    controller: cardCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'رابط الكارت (cardUrl) أو ارفع صورة',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: uploading ? null : pickAndUpload,
+                    icon: uploading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.image_outlined),
+                    label: Text(
+                      uploading ? 'جاري الرفع إلى Cloudinary...' : 'رفع صورة الكارت (Cloudinary)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'المسار: ${CrowdRtdbPaths.squadRootForApp(FanAppIdentity.registryAppId)}/*',
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogCtx, true),
+                child: const Text('حفظ'),
+              ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('حفظ')),
-        ],
+          );
+        },
       ),
     );
     if (ok != true) return;
@@ -150,6 +248,7 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
     if (name.isEmpty) return;
     setState(() => _busy = true);
     try {
+      final power = int.tryParse(powerCtrl.text.trim());
       final updates = <String, Object?>{
         'name': name,
         'position': posCtrl.text.trim().toLowerCase(),
@@ -157,12 +256,14 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
       };
       final n = int.tryParse(numCtrl.text.trim());
       if (n != null) updates['number'] = n;
+      if (power != null) updates['power'] = power;
       if (player == null) {
         await _repo.adminAddPlayer(
           name: name,
           cardUrl: cardCtrl.text.trim(),
           position: posCtrl.text.trim().toLowerCase(),
           number: n,
+          power: power,
         );
       } else {
         await _repo.adminUpdatePlayer(player.id, updates);
@@ -227,10 +328,79 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
           role: _AiRole.assistant,
           text: res.answer,
         ));
+        _pendingAiAction = res.pendingAction;
       });
       if (res.actionExecuted) {
         await _loadData();
       }
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
+    }
+  }
+
+  Future<void> _confirmPendingAiAction() async {
+    if (_aiBusy) return;
+    if (_pendingAiAction == null) return;
+    setState(() {
+      _messages.add(const _AiMessage(role: _AiRole.user, text: 'تأكيد التنفيذ'));
+      _aiBusy = true;
+    });
+    try {
+      final res = await _ai.handlePrompt('تأكيد');
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_AiMessage(
+          role: _AiRole.assistant,
+          text: res.answer,
+        ));
+        _pendingAiAction = res.pendingAction;
+      });
+      if (res.actionExecuted) {
+        await _loadData();
+      }
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
+    }
+  }
+
+  Future<void> _sendQuickProtectPrompt() async {
+    if (_aiBusy) return;
+    setState(() {
+      _messages.add(const _AiMessage(role: _AiRole.user, text: 'احميني النهاردة'));
+      _aiBusy = true;
+    });
+    try {
+      final res = await _ai.handlePrompt('احميني النهاردة');
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_AiMessage(role: _AiRole.assistant, text: res.answer));
+      });
+      if (res.actionExecuted) {
+        await _loadData();
+      }
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
+    }
+  }
+
+  Future<void> _runSmokeTest() async {
+    if (_aiBusy) return;
+    setState(() {
+      _messages.add(const _AiMessage(
+        role: _AiRole.user,
+        text: 'Run Smoke Test',
+      ));
+      _aiBusy = true;
+    });
+    try {
+      final report = await _ai.runSmokeTest();
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_AiMessage(
+          role: _AiRole.assistant,
+          text: report,
+        ));
+      });
     } finally {
       if (mounted) setState(() => _aiBusy = false);
     }
@@ -254,18 +424,38 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
         title: const Text('لوحة تحكم الأدمن'),
         backgroundColor: Colors.black,
         actions: [
-          IconButton(onPressed: _busy ? null : _loadData, icon: const Icon(Icons.refresh)),
+          CustomIconButton(
+            icon: Icons.refresh,
+            semanticsLabel: 'زر تحديث بيانات لوحة الأدمن',
+            color: Colors.white,
+            onPressed: _busy ? null : _loadData,
+          ),
         ],
       ),
       backgroundColor: Colors.black,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _busy ? null : () => _addOrEditPlayer(),
+      floatingActionButton: CustomFAB(
+        icon: Icons.add,
+        semanticsLabel: 'زر إضافة لاعب جديد للتصويت',
         backgroundColor: AppColors.secondary,
-        child: const Icon(Icons.add),
+        foregroundColor: Colors.white,
+        onPressed: _busy ? null : () => _addOrEditPlayer(),
       ),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
+          _buildAdminShortcutsCard(),
+          const SizedBox(height: 12),
+          _buildMatchVotesAdminCard(),
+          if (ReleaseModeGuard.allowDebugOps &&
+              ExperimentalFeatureGuard.allowLoad(
+                ExperimentalFeatureId.productionOpsSandbox,
+              )) ...[
+            const SizedBox(height: 12),
+            _buildOpsDashboardCard(),
+          ],
+          const SizedBox(height: 12),
+          _buildReelsAdminCard(),
+          const SizedBox(height: 12),
           _buildSessionCard(),
           const SizedBox(height: 12),
           _buildControlsCard(),
@@ -306,13 +496,17 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
                         style: const TextStyle(fontSize: 9),
                       ),
                     ),
-                    IconButton(
+                    CustomIconButton(
+                      icon: Icons.edit,
+                      semanticsLabel: 'زر تعديل بيانات اللاعب ${p.name}',
+                      color: Colors.white70,
                       onPressed: () => _addOrEditPlayer(player: p),
-                      icon: const Icon(Icons.edit, color: Colors.white70),
                     ),
-                    IconButton(
+                    CustomIconButton(
+                      icon: Icons.delete,
+                      semanticsLabel: 'زر حذف اللاعب ${p.name}',
+                      color: Colors.redAccent,
                       onPressed: () => _deletePlayer(p),
-                      icon: const Icon(Icons.delete, color: Colors.redAccent),
                     ),
                   ],
                 ),
@@ -321,6 +515,131 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
           ),
           const SizedBox(height: 80),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAdminShortcutsCard() {
+    return Card(
+      color: const Color(0xFF151515),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'الميدان — RTDB',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'الكتابة تتم تحت ${CrowdRtdbPaths.squadRootForApp(FanAppIdentity.registryAppId)} (لحظي مع شاشة الجمهور/الميدان).',
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _busy ? null : () => _addOrEditPlayer(),
+                    icon: const Icon(Icons.cloud_upload_outlined),
+                    label: const Text('رفع الكرت'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _busy
+                        ? null
+                        : () {
+                            Navigator.of(context).push<void>(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const PublicArenaPage(),
+                              ),
+                            );
+                          },
+                    icon: const Icon(Icons.dashboard_customize_outlined),
+                    label: const Text('تعديل التشكيل'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatchVotesAdminCard() {
+    final id = CrowdAppIdentity.current;
+    return AdminControlVisualSystem.entryTile(
+      identity: id,
+      icon: Icons.stadium_outlined,
+      title: 'مركز المباراة — نشر التصويت',
+      subtitle:
+          'جلسة · تشكيلة · مكتبة كروت · معاينة · تفعيل — match_votes/${FanAppIdentity.registryAppId}',
+      onTap: _busy
+          ? null
+          : () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => const MatchControlConsolePage(),
+                ),
+              );
+            },
+    );
+  }
+
+  Widget _buildOpsDashboardCard() {
+    return Card(
+      color: const Color(0xFF151515),
+      child: ListTile(
+        leading: const Icon(Icons.science_outlined, color: Colors.cyanAccent),
+        title: const Text(
+          'Production Ops (Sandbox)',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+        subtitle: Text(
+          'تحقق تشغيلي — جلسات sandbox فقط (debug)',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+        onTap: _busy
+            ? null
+            : () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const ProductionOpsDashboardPage(),
+                  ),
+                );
+              },
+      ),
+    );
+  }
+
+  Widget _buildReelsAdminCard() {
+    return Card(
+      color: const Color(0xFF151515),
+      child: ListTile(
+        leading: const Icon(Icons.movie_filter_outlined, color: Colors.white70),
+        title: const Text('لوحة ريلز احترافية', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        subtitle: Text(
+          'رفع Cloudinary + شريط تقدم + Firestore (reels)',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+        onTap: _busy
+            ? null
+            : () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => BlocProvider(
+                      create: (_) => ReelsFeedCubit(),
+                      child: const AdminReelsPage(),
+                    ),
+                  ),
+                );
+              },
       ),
     );
   }
@@ -338,7 +657,7 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('تحكم نسر المباراة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            Text('تحكم ${CrowdHeroLabels.matchTitle}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(
               _session == null ? 'لا توجد جلسة نشطة' : 'جلسة نشطة - متبقي $mm:$ss',
@@ -465,6 +784,26 @@ class _CrowdAdminPageState extends State<CrowdAdminPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _aiBusy ? null : _sendQuickProtectPrompt,
+                  icon: const Icon(Icons.shield_moon_outlined, size: 16),
+                  label: const Text('احميني النهاردة'),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _aiBusy ? null : _runSmokeTest,
+                  icon: const Icon(Icons.science_outlined, size: 16),
+                  label: const Text('Smoke Test'),
+                ),
+                const SizedBox(width: 8),
+                if (_pendingAiAction != null) ...[
+                  FilledButton(
+                    onPressed: _aiBusy ? null : _confirmPendingAiAction,
+                    style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+                    child: Text('تأكيد التنفيذ'),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 FilledButton(
                   onPressed: _aiBusy ? null : _sendAiPrompt,
                   style: FilledButton.styleFrom(backgroundColor: AppColors.secondary),

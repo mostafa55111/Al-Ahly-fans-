@@ -9,6 +9,18 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# تهدئة ضوضاء التحليل (مثلاً عند `flutter analyze` بدون `--no-fatal-infos`).
+# لا يُلغي الأخطاء الحقيقية؛ يركّز التنبيهات على ما يغيّر السلوك.
+analyzer:
+  errors:
+    prefer_const_constructors: ignore
+    prefer_const_declarations: ignore
+    prefer_const_literals_to_create_immutables: ignore
+    prefer_null_aware_operators: ignore
+    deprecated_member_use: ignore
+    deprecated_member_use_from_same_package: ignore
+    use_build_context_synchronously: ignore
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

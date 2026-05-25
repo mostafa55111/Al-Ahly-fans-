@@ -1,0 +1,167 @@
+import 'package:gomhor_alahly_clean_new/features/travel/domain/models/governorate_model.dart';
+
+/// قائمة محافظات مرتبة حسب الجماهيرية (الأعلى أولاً).
+List<GovernorateModel> kGovernoratesByPopularity = [
+  const GovernorateModel(
+    id: 'cairo',
+    nameAr: 'القاهرة',
+    code3: '001',
+    popularityRank: 1,
+  ),
+  const GovernorateModel(
+    id: 'giza',
+    nameAr: 'الجيزة',
+    code3: '002',
+    popularityRank: 2,
+  ),
+  const GovernorateModel(
+    id: 'alex',
+    nameAr: 'الإسكندرية',
+    code3: '003',
+    popularityRank: 3,
+  ),
+  const GovernorateModel(
+    id: 'dakahlia',
+    nameAr: 'الدقهلية (المنصورة)',
+    code3: '011',
+    popularityRank: 4,
+  ),
+  const GovernorateModel(
+    id: 'kafr_sheikh',
+    nameAr: 'كفر الشيخ',
+    code3: '047',
+    popularityRank: 5,
+  ),
+  const GovernorateModel(
+    id: 'gharbia',
+    nameAr: 'الغربية (طنطا/المحلة)',
+    code3: '012',
+    popularityRank: 6,
+  ),
+  const GovernorateModel(
+    id: 'sharkia',
+    nameAr: 'الشرقية (الزقازيق)',
+    code3: '013',
+    popularityRank: 7,
+  ),
+  const GovernorateModel(
+    id: 'qalyubia',
+    nameAr: 'القليوبية (بنها/شبرا)',
+    code3: '014',
+    popularityRank: 8,
+  ),
+  const GovernorateModel(
+    id: 'monufia',
+    nameAr: 'المنوفية (شبين الكوم)',
+    code3: '015',
+    popularityRank: 9,
+  ),
+  const GovernorateModel(
+    id: 'beheira',
+    nameAr: 'البحيرة (دمنهور)',
+    code3: '016',
+    popularityRank: 10,
+  ),
+  const GovernorateModel(
+    id: 'fayoum',
+    nameAr: 'الفيوم',
+    code3: '017',
+    popularityRank: 11,
+  ),
+  const GovernorateModel(
+    id: 'beni_suef',
+    nameAr: 'بني سويف',
+    code3: '018',
+    popularityRank: 12,
+  ),
+  const GovernorateModel(
+    id: 'minya',
+    nameAr: 'المنيا',
+    code3: '019',
+    popularityRank: 13,
+  ),
+  const GovernorateModel(
+    id: 'assiut',
+    nameAr: 'أسيوط',
+    code3: '020',
+    popularityRank: 14,
+  ),
+  const GovernorateModel(
+    id: 'sohag',
+    nameAr: 'سوهاج',
+    code3: '021',
+    popularityRank: 15,
+  ),
+  const GovernorateModel(
+    id: 'qena',
+    nameAr: 'قنا',
+    code3: '022',
+    popularityRank: 16,
+  ),
+  const GovernorateModel(
+    id: 'luxor',
+    nameAr: 'الأقصر',
+    code3: '023',
+    popularityRank: 17,
+  ),
+  const GovernorateModel(
+    id: 'aswan',
+    nameAr: 'أسوان',
+    code3: '024',
+    popularityRank: 18,
+  ),
+  const GovernorateModel(
+    id: 'new_valley',
+    nameAr: 'الوادي الجديد (الخارجة)',
+    code3: '025',
+    popularityRank: 19,
+  ),
+  const GovernorateModel(
+    id: 'matrouh',
+    nameAr: 'مطروح',
+    code3: '026',
+    popularityRank: 20,
+  ),
+  const GovernorateModel(
+    id: 'north_sinai',
+    nameAr: 'شمال سيناء (العريش)',
+    code3: '027',
+    popularityRank: 21,
+  ),
+  const GovernorateModel(
+    id: 'south_sinai',
+    nameAr: 'جنوب سيناء (شرم الشيخ)',
+    code3: '028',
+    popularityRank: 22,
+  ),
+  const GovernorateModel(
+    id: 'red_sea',
+    nameAr: 'البحر الأحمر (الغردقة)',
+    code3: '029',
+    popularityRank: 23,
+  ),
+  const GovernorateModel(
+    id: 'port_said',
+    nameAr: 'بورسعيد',
+    code3: '030',
+    popularityRank: 24,
+  ),
+  const GovernorateModel(
+    id: 'ismailia',
+    nameAr: 'الإسماعيلية',
+    code3: '031',
+    popularityRank: 25,
+  ),
+  const GovernorateModel(
+    id: 'suez',
+    nameAr: 'السويس',
+    code3: '032',
+    popularityRank: 26,
+  ),
+  const GovernorateModel(
+    id: 'damietta',
+    nameAr: 'دمياط',
+    code3: '033',
+    popularityRank: 27,
+  ),
+];

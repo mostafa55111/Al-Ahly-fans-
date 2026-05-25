@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:gomhor_alahly_clean_new/features/matches/data/models/lineup.dart';
 
-/// كارت لاعب لتصويت رجل المباراة.
-/// ‣ بيعرض الصورة + الرقم + الاسم + المركز + شريط النسبة المئوية.
-/// ‣ بيتلوّن لما المستخدم يصوّت له.
+/// كارت لاعب لتصويت رجل المباراة (تصميم «نانو بنانا» — كارت غني بصور وبروgres).
+/// عند تمرير [brandPrimary] / [brandSecondary] يُستخدمان بدل ألوان الأهلي الافتراضية.
 class MotmPlayerCard extends StatelessWidget {
   final LineupPlayer player;
   final int votes;
@@ -14,6 +13,12 @@ class MotmPlayerCard extends StatelessWidget {
   final bool isWinner;
   final bool enabled;
   final VoidCallback onTap;
+
+  /// لون الهوية الأساسي (حدود التصويت، التدرّج، الشريط) — افتراضي أحمر الأهلي.
+  final Color? brandPrimary;
+
+  /// لون ثانوي (الفائز، شارة الرقم، تقدّم غير «صوتي») — افتراضي ذهبي الأهلي.
+  final Color? brandSecondary;
 
   const MotmPlayerCard({
     super.key,
@@ -24,6 +29,8 @@ class MotmPlayerCard extends StatelessWidget {
     this.isMyVote = false,
     this.isWinner = false,
     this.enabled = true,
+    this.brandPrimary,
+    this.brandSecondary,
   });
 
   static const Color _ahlyRed = Color(0xFFE30613);
@@ -31,11 +38,14 @@ class MotmPlayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = brandPrimary ?? _ahlyRed;
+    final gold = brandSecondary ?? _ahlyGold;
+
     final pct = totalVotes > 0 ? (votes / totalVotes) : 0.0;
     final borderColor = isWinner
-        ? _ahlyGold
+        ? gold
         : isMyVote
-            ? _ahlyRed
+            ? primary
             : Colors.white12;
 
     return Material(
@@ -52,7 +62,7 @@ class MotmPlayerCard extends StatelessWidget {
             boxShadow: isWinner
                 ? [
                     BoxShadow(
-                      color: _ahlyGold.withValues(alpha: 0.25),
+                      color: gold.withValues(alpha: 0.25),
                       blurRadius: 16,
                       spreadRadius: 1,
                     ),
@@ -70,8 +80,11 @@ class MotmPlayerCard extends StatelessWidget {
                     height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [_ahlyRed, Color(0xFF7A0000)],
+                      gradient: LinearGradient(
+                        colors: [
+                          primary,
+                          Color.lerp(primary, Colors.black, 0.45)!,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -104,15 +117,18 @@ class MotmPlayerCard extends StatelessWidget {
                         height: 24,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: _ahlyGold,
+                          color: gold,
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: const Color(0xFF0A0A0A), width: 2),
                         ),
                         child: Text(
                           '${player.number}',
-                          style: const TextStyle(
-                            color: Colors.black,
+                          style: TextStyle(
+                            color: ThemeData.estimateBrightnessForColor(gold) ==
+                                    Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
                             fontWeight: FontWeight.w800,
                             fontSize: 11,
                           ),
@@ -125,8 +141,8 @@ class MotmPlayerCard extends StatelessWidget {
                       left: -8,
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: _ahlyGold,
+                        decoration: BoxDecoration(
+                          color: gold,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.emoji_events,
@@ -160,7 +176,7 @@ class MotmPlayerCard extends StatelessWidget {
                   minHeight: 5,
                   backgroundColor: Colors.white10,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    isMyVote ? _ahlyRed : _ahlyGold,
+                    isMyVote ? primary : gold,
                   ),
                 ),
               ),

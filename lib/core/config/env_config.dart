@@ -6,7 +6,7 @@ class EnvConfig {
   // Firebase Configuration
   static const String firebaseProjectId = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',
-    defaultValue: 'ahly-fans-app-prod',
+    defaultValue: '',
   );
 
   static const String firebaseApiKey = String.fromEnvironment(
@@ -32,22 +32,22 @@ class EnvConfig {
   // External APIs
   static const String geminiApiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: 'AIzaSyCNlqhPN6dkOTjF8DfV9IE4wyEzWjrCgjQ',
+    defaultValue: '',
   );
 
   static const String footballApiKey = String.fromEnvironment(
     'FOOTBALL_API_KEY',
-    defaultValue: '8c16585903c335eb82435488feac3937',
+    defaultValue: '',
   );
 
   static const String cloudinaryApiKey = String.fromEnvironment(
     'CLOUDINARY_API_KEY',
-    defaultValue: '497232166977864',
+    defaultValue: '',
   );
 
   static const String cloudinaryCloudName = String.fromEnvironment(
     'CLOUDINARY_CLOUD_NAME',
-    defaultValue: 'dubc6k1iy',
+    defaultValue: '',
   );
 
   // App Configuration

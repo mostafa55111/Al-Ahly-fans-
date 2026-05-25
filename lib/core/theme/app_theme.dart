@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:gomhor_alahly_clean_new/core/time/time_service.dart';
 
 class AppColors {
   static const Color deepBlack = Color(0xFF0A0A0A);
@@ -9,6 +10,8 @@ class AppColors {
   static const Color brightGold = Color(0xFFEBC374);
   static const Color darkGold = Color(0xFF8B6B3F);
   static const Color royalRed = Color(0xFFE30613);
+  /// أزرق ملكي — يُستخدم في مسارات مشتركة مع تطبيق الزمالك ( accent بديل ).
+  static const Color royalBlue = Color(0xFF00247D);
   static const Color brightRed = Color(0xFFFF1A1A);
   static const Color darkRed = Color(0xFF9E0000);
   static const Color white = Color(0xFFFFFFFF);
@@ -309,5 +312,9 @@ class AppTheme {
         ),
       ),
     );
+  }
+
+  static ThemeData darkThemeForMoment(AdaptiveMoment moment) {
+    return darkTheme();
   }
 }

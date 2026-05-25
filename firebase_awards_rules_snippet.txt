@@ -1,0 +1,54 @@
+// ═══════════════════════════════════════════════════════════════════
+// Awards Production Layer — RTDB rules snippet (Phase 1)
+// Merge into your root database.rules.json under "rules".
+// ═══════════════════════════════════════════════════════════════════
+
+{
+  "rules": {
+    "awards": {
+      "$club": {
+        ".read": true,
+        ".write": "auth != null",
+
+        "matches": {
+          "$year": {
+            "$matchId": {
+              ".read": true,
+              ".write": "auth != null && (!data.exists() || !newData.exists())",
+              ".validate": "newData.hasChildren(['matchId','winnerPlayerId','closedAt','monthKey','seasonKey'])"
+            }
+          }
+        },
+
+        "monthly": {
+          "$yyyyMm": {
+            ".read": true,
+            ".write": "auth != null"
+          }
+        },
+
+        "season": {
+          "$yyyy": {
+            ".read": true,
+            ".write": "auth != null"
+          }
+        }
+      }
+    },
+
+    "player_awards": {
+      "$club": {
+        "$playerId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    }
+  }
+}
+
+// Notes:
+// - match snapshots: append-only (no overwrite once created).
+// - monthly/season/player_awards: authenticated updates for aggregation.
+// - For stricter production: restrict write to custom claims (admin role).
+// - match_votes paths remain governed by your existing rules.

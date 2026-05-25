@@ -1,6 +1,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/data/models/user_activity_summary.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/data/services/reels_algorithm.dart';
 
 class VideoModel {
   final String id;
@@ -10,6 +11,8 @@ class VideoModel {
   final String userId;
   final String userName;
   final String userProfilePic;
+  /// رابط المقطع الصوتي المشترك (أو نفس [videoUrl] للصوت الأصلي) — لتجميع صفحة الصوت.
+  final String audioUrl;
   final String? fixtureId;
   final DateTime timestamp;
   final int likesCount;
@@ -19,6 +22,9 @@ class VideoModel {
 
   /// إجمالي عدد مرّات المشاهدة (يحدَّث تلقائياً من [ReelsRankingService])
   final int viewsCount;
+
+  /// مشاهدات مؤهّلة في الخوارزمية (مثلاً بعد مشاهدة ≥70% من مدة الريل).
+  final int watchCount;
 
   /// إجمالي ثواني المشاهدة عبر جميع المستخدمين
   final int totalWatchTime;
@@ -34,6 +40,20 @@ class VideoModel {
   /// لما يبقى true → ما يظهرش في `For You` ولا `Following`، فقط لصاحبه.
   final bool isPrivate;
 
+  /// جمهور الريل: `zamalek` | `all` | `ahly`.
+  final String visibility;
+
+  /// مصدر التطبيق في Firestore للخوارزمية: `ahly` أو `zamalek`.
+  final String appSource;
+
+  /// مجموع تفاعلي محلي (likes + comments + views) — يطابق منطق العرض في التطبيق ؛
+  /// في Firestore يُحدَّث الحقل `engagement_count` ذريًا عبر `FieldValue.increment`
+  /// في [ReelsRemoteDataSource.incrementEngagementCount] عند كل تفاعل لتفادي سباقات الكتابة.
+  final int engagementCount;
+
+  /// آخر score متزامن من مستند Firestore (اختياري).
+  final double? syncedRankingScore;
+
   VideoModel({
     required this.id,
     required this.videoUrl,
@@ -42,6 +62,7 @@ class VideoModel {
     required this.userId,
     required this.userName,
     this.userProfilePic = '', // Default to empty string if not provided
+    this.audioUrl = '',
     this.fixtureId,
     required this.timestamp,
     this.likesCount = 0,
@@ -49,41 +70,33 @@ class VideoModel {
     this.sharesCount = 0,
     this.savesCount = 0,
     this.viewsCount = 0,
+    this.watchCount = 0,
     this.totalWatchTime = 0,
     this.isLikedByCurrentUser = false, // Default to false
     this.isSavedByCurrentUser = false,
     this.isPrivate = false,
+    this.visibility = 'all',
+    this.appSource = '',
+    this.engagementCount = 0,
+    this.syncedRankingScore,
   });
 
-  /// حساب الـ score للترتيب الذكي (For You feed - TikTok style)
-  /// ═══════════════════════════════════════════════════════════════
-  /// score = likesCount*2
-  ///       + commentsCount*3
-  ///       + sharesCount*4
-  ///       + viewsCount
-  ///       + freshness
-  /// ═══════════════════════════════════════════════════════════════
-  /// - share له أعلى وزن (أعمق engagement).
-  /// - comment وزنه أعلى من like (تفاعل نصّي > تفاعل سريع).
-  /// - freshness: يضيف حتى 50 نقطة للريل الجديد، يتلاشى خلال 7 أيام.
-  double get score =>
-      (likesCount * 2.0) +
-      (commentsCount * 3.0) +
-      (sharesCount * 4.0) +
-      viewsCount.toDouble() +
-      freshness;
+  /// نقاط الترتيب الخوارزمية — (likes×2)+(comments×3)+(views×1) مع انحلال زمني ([ReelsAlgorithm]).
+  double get score => ReelsAlgorithm.computeRankingScore(
+        likes: likesCount,
+        comments: commentsCount,
+        views: viewsCount,
+        watchCount: watchCount,
+        uploadedAt: timestamp,
+      );
 
-  /// معامل "الحداثة" — يعطي دفعة للريلز الجديدة ويخفت مع الوقت.
-  /// ═══════════════════════════════════════════════════════════════
-  /// - يبدأ بـ 50 نقطة عند الرفع.
-  /// - يتلاشى خطياً على مدى 7 أيام إلى 0.
-  /// - لا يصبح سالباً أبداً (clamp).
-  double get freshness {
-    final ageHours = DateTime.now().difference(timestamp).inMinutes / 60.0;
-    const decayWindowHours = 7 * 24.0; // 7 أيام
-    const maxBoost = 50.0;
-    final factor = 1.0 - (ageHours / decayWindowHours);
-    return (maxBoost * factor).clamp(0.0, maxBoost);
+  /// مفتاح واحد لجميع الريلز التي تشترك في نفس المصدر الصوتي (Firestore `audioUrl` أو رابط الفيديو كاحتياط).
+  String get audioTrackKey => audioUrl.isNotEmpty ? audioUrl : videoUrl;
+
+  /// عنوان يُعرض في شريط الصوت وصفحة الترند الصوتي.
+  String get audioDisplayLabel {
+    final name = userName.isNotEmpty ? userName : 'مستخدم';
+    return caption.isNotEmpty ? 'الصوت الأصلي — $name' : 'الصوت الأصلي — أهلاوي';
   }
 
   /// حساب الـ personalScore بناءً على سلوك المستخدم السابق.
@@ -157,7 +170,23 @@ class VideoModel {
       }
     }
 
+    double? parseDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value);
+      return null;
+    }
+
     try {
+      final lc = parseInt(map['likesCount'] ?? map['likes'] ?? 0);
+      final cc = parseInt(map['commentsCount'] ?? map['comments'] ?? 0);
+      final vc = parseInt(map['viewsCount'] ?? map['views'] ?? 0);
+      final wc = parseInt(map['watch_count'] ?? 0);
+      final eg = map['engagement_count'] != null
+          ? parseInt(map['engagement_count'])
+          : lc + cc + vc + wc;
+
       return VideoModel(
         id: id,
         videoUrl: parseString(map['videoUrl']),
@@ -166,18 +195,24 @@ class VideoModel {
         userId: parseString(map['userId']),
         userName: parseString(map['userName']).isEmpty ? 'مستخدم' : parseString(map['userName']),
         userProfilePic: parseString(map['userProfilePic']),
+        audioUrl: parseString(map['audioUrl']),
         fixtureId: map['fixtureId']?.toString(),
         timestamp: parseTimestamp(map['timestamp']),
-        likesCount: parseInt(map['likesCount'] ?? map['likes'] ?? 0),
-        commentsCount: parseInt(map['commentsCount'] ?? map['comments'] ?? 0),
+        likesCount: lc,
+        commentsCount: cc,
         sharesCount: parseInt(map['sharesCount'] ?? map['shares'] ?? 0),
         savesCount: parseInt(map['savesCount'] ?? map['saves'] ?? 0),
-        viewsCount: parseInt(map['viewsCount'] ?? map['views'] ?? 0),
+        viewsCount: vc,
+        watchCount: wc,
         // نقرأ الحقل الجديد مع fallback على القديم للـ backward compatibility
         totalWatchTime:
             parseInt(map['totalWatchTime'] ?? map['watchTime'] ?? 0),
         isLikedByCurrentUser: false, // This will be set in the repository layer
         isPrivate: map['isPrivate'] == true,
+        visibility: _parseVisibility(map['visibility']),
+        appSource: _parseAppSource(map['app_source']),
+        engagementCount: eg,
+        syncedRankingScore: parseDouble(map['score']),
       );
     } catch (e, stackTrace) {
       // Return a default VideoModel if parsing fails
@@ -194,18 +229,51 @@ class VideoModel {
         userId: parseString(map['userId']),
         userName: parseString(map['userName']).isEmpty ? 'مستخدم' : parseString(map['userName']),
         userProfilePic: parseString(map['userProfilePic']),
+        audioUrl: parseString(map['audioUrl']),
         timestamp: DateTime.now(),
         likesCount: parseInt(map['likesCount'] ?? map['likes'] ?? 0),
         commentsCount: parseInt(map['commentsCount'] ?? map['comments'] ?? 0),
         sharesCount: parseInt(map['sharesCount'] ?? map['shares'] ?? 0),
         savesCount: parseInt(map['savesCount'] ?? map['saves'] ?? 0),
         viewsCount: parseInt(map['viewsCount'] ?? map['views'] ?? 0),
+        watchCount: parseInt(map['watch_count'] ?? 0),
         totalWatchTime:
             parseInt(map['totalWatchTime'] ?? map['watchTime'] ?? 0),
         isLikedByCurrentUser: false,
         isPrivate: map['isPrivate'] == true,
+        visibility: _parseVisibility(map['visibility']),
+        appSource: _parseAppSource(map['app_source']),
+        engagementCount: parseInt(map['engagement_count']),
+        syncedRankingScore: parseDouble(map['score']),
       );
     }
+  }
+
+  static String _parseVisibility(dynamic v) {
+    if (v == null) return 'all';
+    final s = v.toString().trim().toLowerCase();
+    if (s.isEmpty) return 'all';
+    if (s == 'zamalek' || s == 'all' || s == 'ahly') return s;
+    return 'all';
+  }
+
+  static String _parseAppSource(dynamic v) {
+    if (v == null) return '';
+    final s = v.toString().trim().toLowerCase();
+    if (s == 'ahly' || s == 'zamalek') return s;
+    return '';
+  }
+
+  /// يظهر في فيد أهلاوي عندما يكون الجمهور `ahly` أو `all`.
+  bool get isVisibleInAhlyFeed {
+    final v = visibility.toLowerCase();
+    return v == 'ahly' || v == 'all';
+  }
+
+  /// يظهر في فيد تطبيق الزملكاوي فقط لـ `zamalek` أو `all`.
+  bool get isVisibleInZamalekFeed {
+    final v = visibility.toLowerCase();
+    return v == 'zamalek' || v == 'all';
   }
 
   Map<String, dynamic> toMap() {
@@ -216,6 +284,7 @@ class VideoModel {
       'userId': userId,
       'userName': userName,
       'userProfilePic': userProfilePic,
+      'audioUrl': audioUrl.isNotEmpty ? audioUrl : videoUrl,
       'fixtureId': fixtureId,
       'timestamp': timestamp.millisecondsSinceEpoch,
       'likesCount': likesCount,
@@ -223,8 +292,18 @@ class VideoModel {
       'sharesCount': sharesCount,
       'savesCount': savesCount,
       'viewsCount': viewsCount,
+      'watch_count': watchCount,
       'totalWatchTime': totalWatchTime,
       'isPrivate': isPrivate,
+      'visibility': visibility,
+    };
+  }
+
+  Map<String, dynamic> toFirestoreFlatMap() {
+    return {
+      ...toMap(),
+      if (appSource.isNotEmpty) 'app_source': appSource,
+      'engagement_count': engagementCount,
     };
   }
 
@@ -236,6 +315,7 @@ class VideoModel {
     String? userId,
     String? userName,
     String? userProfilePic,
+    String? audioUrl,
     String? fixtureId,
     DateTime? timestamp,
     int? likesCount,
@@ -243,10 +323,15 @@ class VideoModel {
     int? sharesCount,
     int? savesCount,
     int? viewsCount,
+    int? watchCount,
     int? totalWatchTime,
     bool? isLikedByCurrentUser,
     bool? isSavedByCurrentUser,
     bool? isPrivate,
+    String? visibility,
+    String? appSource,
+    int? engagementCount,
+    double? syncedRankingScore,
   }) {
     return VideoModel(
       id: id ?? this.id,
@@ -256,6 +341,7 @@ class VideoModel {
       userId: userId ?? this.userId,
       userName: userName ?? this.userName,
       userProfilePic: userProfilePic ?? this.userProfilePic,
+      audioUrl: audioUrl ?? this.audioUrl,
       fixtureId: fixtureId ?? this.fixtureId,
       timestamp: timestamp ?? this.timestamp,
       likesCount: likesCount ?? this.likesCount,
@@ -263,10 +349,15 @@ class VideoModel {
       sharesCount: sharesCount ?? this.sharesCount,
       savesCount: savesCount ?? this.savesCount,
       viewsCount: viewsCount ?? this.viewsCount,
+      watchCount: watchCount ?? this.watchCount,
       totalWatchTime: totalWatchTime ?? this.totalWatchTime,
       isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
       isSavedByCurrentUser: isSavedByCurrentUser ?? this.isSavedByCurrentUser,
       isPrivate: isPrivate ?? this.isPrivate,
+      visibility: visibility ?? this.visibility,
+      appSource: appSource ?? this.appSource,
+      engagementCount: engagementCount ?? this.engagementCount,
+      syncedRankingScore: syncedRankingScore ?? this.syncedRankingScore,
     );
   }
 
@@ -281,6 +372,7 @@ class VideoModel {
         other.userId == userId &&
         other.userName == userName &&
         other.userProfilePic == userProfilePic &&
+        other.audioUrl == audioUrl &&
         other.fixtureId == fixtureId &&
         other.timestamp == timestamp &&
         other.likesCount == likesCount &&
@@ -288,14 +380,19 @@ class VideoModel {
         other.sharesCount == sharesCount &&
         other.savesCount == savesCount &&
         other.viewsCount == viewsCount &&
+        other.watchCount == watchCount &&
         other.totalWatchTime == totalWatchTime &&
         other.isLikedByCurrentUser == isLikedByCurrentUser &&
-        other.isSavedByCurrentUser == isSavedByCurrentUser;
+        other.isSavedByCurrentUser == isSavedByCurrentUser &&
+        other.visibility == visibility &&
+        other.appSource == appSource &&
+        other.engagementCount == engagementCount &&
+        other.syncedRankingScore == syncedRankingScore;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
+    return Object.hashAll([
       id,
       videoUrl,
       thumbnailUrl,
@@ -303,6 +400,7 @@ class VideoModel {
       userId,
       userName,
       userProfilePic,
+      audioUrl,
       fixtureId,
       timestamp,
       likesCount,
@@ -310,10 +408,15 @@ class VideoModel {
       sharesCount,
       savesCount,
       viewsCount,
+      watchCount,
       totalWatchTime,
       isLikedByCurrentUser,
       isSavedByCurrentUser,
-    );
+      visibility,
+      appSource,
+      engagementCount,
+      syncedRankingScore,
+    ]);
   }
 
   @override

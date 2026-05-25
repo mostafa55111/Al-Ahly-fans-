@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gomhor_alahly_clean_new/core/services/google_sign_in_service.dart';
+import 'package:gomhor_alahly_clean_new/core/widgets/brand_auth_snackbar.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/reels_screen_new.dart';
 
 class GoogleSignInScreen extends StatefulWidget {
@@ -196,12 +197,9 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل تسجيل الدخول: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
+        showBrandAuthErrorSnackBar(
+          context,
+          'فشل تسجيل الدخول: ${e.toString()}',
         );
       }
     } finally {

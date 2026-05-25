@@ -8,7 +8,8 @@ plugins {
 }
 
 android {
-    namespace = "com.example.gomhor_alahly_clean_new"
+    // يجب أن يطابق تطبيق الأندرويد في Firebase Console + google-services.json
+    namespace = "com.mostafa.gomhor_ahly"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
     configurations.all {
@@ -29,8 +30,11 @@ android {
     }
 
     defaultConfig {
+        // يجب مطابقة package_name لتطبيق أندرويد في google-services.json (مشروع Firebase نفسه).
+        // للنشر بمعرّف com.mostafa.gomhor_ahly: أضف التطبيق في Firebase Console ثم حدّث google-services.json.
         applicationId = "com.example.gomhor_alahly_clean_new"
-        minSdk = flutter.minSdkVersion // Firebase requires at least API 21
+        // FFmpeg Kit يتطلب minSdk 24+؛ نرفع الحد الأدنى عند الحاجة فوق قيمة Flutter الافتراضية.
+        minSdk = maxOf(flutter.minSdkVersion, 24)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

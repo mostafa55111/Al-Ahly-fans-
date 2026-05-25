@@ -1,13 +1,27 @@
 /// API Constants
 class ApiConstants {
   // Firebase
-  static const String firebaseProjectId = 'ahly-fans-app';
-  static const String firebaseDatabaseUrl =
-      'https://ahly-fans-app.firebaseio.com';
-  static const String firebaseStorageBucket = 'ahly-fans-app.appspot.com';
+  static const String firebaseProjectId = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+    defaultValue: '',
+  );
+  static const String firebaseDatabaseUrl = String.fromEnvironment(
+    'FIREBASE_DATABASE_URL',
+    defaultValue: '',
+  );
+  static const String firebaseStorageBucket = String.fromEnvironment(
+    'FIREBASE_STORAGE_BUCKET',
+    defaultValue: '',
+  );
 
   // Endpoints
-  static const String baseUrl = 'https://api.example.com';
+  /// Base URL لخدمات الباك-إند الخاصة بالتطبيق (إن وجدت)
+  ///
+  /// ملاحظة: المصدر الرسمي هو `AppConfig.appApiBaseUrl`.
+  static const String baseUrl = String.fromEnvironment(
+    'APP_API_BASE_URL',
+    defaultValue: 'https://api.ahly-fans-app.com',
+  );
   static const String postsEndpoint = '/posts';
   static const String usersEndpoint = '/users';
   static const String followsEndpoint = '/follows';
@@ -32,10 +46,22 @@ class ApiConstants {
   static const Duration shortCacheDuration = Duration(minutes: 5);
 
   // API Keys
-  static const String geminiapiKey = 'AIzaSyCNlqhPN6dkOTjF8DfV9IE4wyEzWjrCgjQ';
-  static const String footballApiKey = '8c16585903c335eb82435488feac3937';
-  static const String cloudinaryApiKey = '497232166977864';
-  static const String cloudinaryCloudName = 'dubc6k1iy';
+  static const String geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
+  static const String footballApiKey = String.fromEnvironment(
+    'FOOTBALL_API_KEY',
+    defaultValue: '',
+  );
+  static const String cloudinaryApiKey = String.fromEnvironment(
+    'CLOUDINARY_API_KEY',
+    defaultValue: '',
+  );
+  static const String cloudinaryCloudName = String.fromEnvironment(
+    'CLOUDINARY_CLOUD_NAME',
+    defaultValue: '',
+  );
 
   // Headers
   static const Map<String, String> defaultHeaders = {

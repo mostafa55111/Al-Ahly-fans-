@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/cubit/reels_feed_cubit.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
@@ -383,7 +384,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
       // 4) حدّث عدّاد تعليقات الريل فقط للـ top-level (ليس للردود)
       if (parentId == null) {
-        widget.feedCubit.recordComment(widget.videoId);
+        await widget.feedCubit.recordComment(widget.videoId);
       }
 
       // 5) تنظيف الـ UI
@@ -514,10 +515,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          IconButton(
+          CustomIconButton(
+            icon: Icons.close,
+            semanticsLabel: 'زر إغلاق التعليقات',
+            color: Colors.white,
+            size: 22,
             onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.close, color: Colors.white, size: 22),
-            splashRadius: 20,
           ),
           const SizedBox(width: 2),
           Icon(Icons.sort,

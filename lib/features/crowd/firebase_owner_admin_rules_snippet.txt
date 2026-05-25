@@ -1,0 +1,68 @@
+# Owner-only admin rules (RTDB) — review & deploy per environment manually
+
+{
+  "rules": {
+    "owner_audit": {
+      "$club": {
+        "entries": {
+          ".read": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true",
+          ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true && !data.exists()",
+          "$entryId": {
+            ".validate": "newData.hasChildren(['action','email','atMs'])"
+          }
+        }
+      }
+    },
+    "app_configs": {
+      "owner_emails": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true"
+      }
+    },
+    "match_votes": {
+      "$club": {
+        "active_match": {
+          ".read": true,
+          ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true",
+          "meta": {
+            "finalized": {
+              ".validate": "newData.val() === true && (data.val() !== true)"
+            }
+          }
+        },
+        "players": {
+          ".read": true,
+          "$playerId": {
+            ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true"
+          }
+        },
+        "card_registry": {
+          ".read": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true",
+          "$cardId": {
+            ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true && ($cardId === newData.child('id').val() || data.child('id').val() === $cardId)"
+          }
+        }
+      }
+    },
+    "match_vote_shards": {
+      "$club": {
+        "$sessionId": {
+          "$shardId": {
+            "votes": {
+              "$uid": {
+                ".write": "auth != null && auth.uid === $uid && root.child('match_votes').child($club).child('active_match/votingEnabled').val() === true && root.child('match_votes').child($club).child('active_match/votingFrozen').val() !== true && root.child('match_votes').child($club).child('active_match/awardsFinalized').val() !== true",
+                ".validate": "newData.hasChildren(['playerId','castAtMs'])"
+              }
+            }
+          }
+        }
+      }
+    },
+    "authority_runtime": {
+      "$club": {
+        ".read": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true",
+        ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true"
+      }
+    }
+  }
+}

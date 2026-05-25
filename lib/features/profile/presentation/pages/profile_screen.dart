@@ -6,15 +6,24 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:video_player/video_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:gomhor_alahly_clean_new/core/di/service_locator_improved.dart';
+import 'package:gomhor_alahly_clean_new/core/navigation/app_shell.dart';
+import 'package:gomhor_alahly_clean_new/core/navigation/open_tiktok_reels_direct.dart';
+import 'package:gomhor_alahly_clean_new/core/notifications/push_notifications_bootstrap.dart';
 import 'package:gomhor_alahly_clean_new/core/services/cloudinary_service.dart';
+import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/pages/login_page.dart';
+import 'package:gomhor_alahly_clean_new/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:gomhor_alahly_clean_new/features/notifications/presentation/widgets/profile_notification_bell.dart';
 import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/profile_visitors_page.dart';
+import 'package:gomhor_alahly_clean_new/features/social/presentation/pages/social_graph_list_page.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/data/models/video_model.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 
 /// ═════════════════════════════════════════════════════════════════
-/// شاشة البروفايل (TikTok-style) — تصميم النادي الأهلي
+/// شاشة البروفايل (TikTok-style) — تصميم النادي الزمالك
 /// ═════════════════════════════════════════════════════════════════
 /// الترتيب من فوق لتحت:
 /// 1. AppBar: زر زوار البروفايل (قدمين) + مشاركة + قائمة الإعدادات (3 نقط).
@@ -37,12 +46,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
-  // ألوان النادي الأهلي
+  // ألوان النادي الزمالك
   static const Color _ahlyRed = Color(0xFFFF2E4D);
   static const Color _ahlyGold = Color(0xFFC5A059);
 
-  final user = FirebaseAuth.instance.currentUser;
-  late DatabaseReference dbRef;
   late TabController _tabController;
   final _picker = ImagePicker();
   final _cloudinary = CloudinaryService();
@@ -50,7 +57,6 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
-    dbRef = FirebaseDatabase.instance.ref('users/${user?.uid}');
     _tabController = TabController(length: 5, vsync: this);
   }
 
@@ -65,6 +71,10 @@ class _ProfileScreenState extends State<ProfileScreen>
   // ══════════════════════════════════════════════════════════════════
 
   Future<void> _handleLogout() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FcmTokenFirestoreSync.clearTokenForUser(uid);
+    }
     await FirebaseAuth.instance.signOut();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
@@ -80,92 +90,120 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   void _shareProfile(Map<String, dynamic> userData) {
-    final name = userData['name']?.toString() ?? 'جمهور الأهلي';
+    final name = userData['name']?.toString() ?? 'زملكاوي';
     final handle = userData['username']?.toString() ?? 'ahly_fan';
-    final uid = user?.uid ?? '';
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     final link = 'https://gomhor-alahly.app/u/$uid';
     Share.share(
-      '$name (@$handle) — تطبيق جمهور الأهلي 🦅\n$link',
+      '$name (@$handle) — تطبيق زملكاوي 🦅\n$link',
       subject: name,
     );
   }
 
-  void _openSettings(Map<String, dynamic> userData) {
+  void _openSettings(Map<String, dynamic> userData) async {
+    final prefs = getIt<SharedPreferences>();
+    var hideAiBubbleByUser =
+        prefs.getBool(AppShell.aiBubbleHiddenPrefKey) ?? false;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF101010),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(8),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setBottomState) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            _settingsTile(
-              ctx,
-              icon: Icons.alternate_email_rounded,
-              title: 'تعديل اسم المستخدم',
-              onTap: () => _editProfileField(
-                fieldKey: 'username',
-                title: 'اسم المستخدم (بدون @)',
-                currentValue: userData['username']?.toString() ?? '',
+              const SizedBox(height: 14),
+              _settingsTile(
+                ctx,
+                icon: Icons.alternate_email_rounded,
+                title: 'تعديل اسم المستخدم',
+                onTap: () => _editProfileField(
+                  fieldKey: 'username',
+                  title: 'اسم المستخدم (بدون @)',
+                  currentValue: userData['username']?.toString() ?? '',
+                ),
               ),
-            ),
-            _settingsTile(
-              ctx,
-              icon: Icons.notifications_none_rounded,
-              title: 'الإشعارات',
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('إعدادات الإشعارات قريباً')),
+              _settingsTile(
+                ctx,
+                icon: Icons.notifications_active_outlined,
+                title: 'الإشعارات',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        NotificationsPage(accentColor: AppColors.royalBlue),
+                  ),
+                ),
               ),
-            ),
-            _settingsTile(
-              ctx,
-              icon: Icons.shield_outlined,
-              title: 'الخصوصية والأمان',
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('قريباً')),
+              SwitchListTile(
+                secondary: const Icon(Icons.smart_toy_outlined,
+                    color: Colors.white),
+                title: const Text(
+                  'إخفاء الفقاعة الذكية',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: const Text(
+                  'إخفاؤها يعطي واجهة أنظف بدون زر AI عائم',
+                  style: TextStyle(color: Colors.white60),
+                ),
+                value: hideAiBubbleByUser,
+                onChanged: (value) async {
+                  setBottomState(() => hideAiBubbleByUser = value);
+                  await AppShell.setAiBubbleHiddenByUser(value);
+                },
               ),
-            ),
-            _settingsTile(
-              ctx,
-              icon: Icons.help_outline_rounded,
-              title: 'مساعدة وآراء',
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('قريباً')),
+              _settingsTile(
+                ctx,
+                icon: Icons.shield_outlined,
+                title: 'الخصوصية والأمان',
+                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('قريباً')),
+                ),
               ),
-            ),
-            _settingsTile(
-              ctx,
-              icon: Icons.info_outline_rounded,
-              title: 'عن جمهور الأهلي',
-              onTap: () => showAboutDialog(
-                context: context,
-                applicationName: 'جمهور الأهلي',
-                applicationVersion: '2.0.0',
-                applicationIcon: const Icon(Icons.shield, color: _ahlyRed),
+              _settingsTile(
+                ctx,
+                icon: Icons.help_outline_rounded,
+                title: 'مساعدة وآراء',
+                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('قريباً')),
+                ),
               ),
-            ),
-            const Divider(color: Colors.white10, height: 18),
-            _settingsTile(
-              ctx,
-              icon: Icons.logout_rounded,
-              title: 'تسجيل الخروج',
-              danger: true,
-              onTap: _handleLogout,
-            ),
-            const SizedBox(height: 12),
-          ],
+              _settingsTile(
+                ctx,
+                icon: Icons.info_outline_rounded,
+                title: 'عن زملكاوي',
+                onTap: () => showAboutDialog(
+                  context: context,
+                  applicationName: 'زملكاوي',
+                  applicationVersion: '2.0.0',
+                  applicationIcon: const Icon(Icons.shield, color: _ahlyRed),
+                ),
+              ),
+              const Divider(color: Colors.white10, height: 18),
+              _settingsTile(
+                ctx,
+                icon: Icons.logout_rounded,
+                title: 'تسجيل الخروج',
+                danger: true,
+                onTap: _handleLogout,
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
@@ -174,13 +212,14 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _settingsTile(
     BuildContext ctx, {
     required IconData icon,
+    Widget? customLeading,
     required String title,
     required VoidCallback onTap,
     bool danger = false,
   }) {
     final color = danger ? _ahlyRed : Colors.white;
     return ListTile(
-      leading: Icon(icon, color: color),
+      leading: customLeading ?? Icon(icon, color: color),
       title: Text(title,
           style: TextStyle(color: color, fontWeight: FontWeight.w600)),
       onTap: () {
@@ -226,9 +265,10 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
 
-    if (result == null || user == null) return;
+    final u = FirebaseAuth.instance.currentUser;
+    if (result == null || u == null) return;
     await FirebaseDatabase.instance
-        .ref('users/${user!.uid}/$fieldKey')
+        .ref('users/${u.uid}/$fieldKey')
         .set(result);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -246,7 +286,8 @@ class _ProfileScreenState extends State<ProfileScreen>
       maxWidth: 1024,
       maxHeight: 1024,
     );
-    if (image == null || user == null) return;
+    final u = FirebaseAuth.instance.currentUser;
+    if (image == null || u == null) return;
 
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
@@ -261,9 +302,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (url.isEmpty) throw Exception('رابط الصورة فارغ');
 
       await FirebaseDatabase.instance
-          .ref('users/${user!.uid}/profilePic')
+          .ref('users/${u.uid}/profilePic')
           .set(url);
-      await user!.updatePhotoURL(url);
+      await u.updatePhotoURL(url);
 
       if (!mounted) return;
       messenger.showSnackBar(
@@ -278,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       messenger.showSnackBar(
         SnackBar(
           content: Text('خطأ في رفع الصورة: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.white,
         ),
       );
     }
@@ -290,58 +331,91 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (user == null) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Text('سجّل الدخول لعرض البروفايل',
-              style: TextStyle(color: Colors.white70)),
-        ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: StreamBuilder(
-        stream: dbRef.onValue,
-        builder: (context, snapshot) {
-          final userData = (snapshot.hasData &&
-                  snapshot.data!.snapshot.value is Map)
-              ? Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map)
-              : <String, dynamic>{};
-
-          return NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) => [
-              _buildSliverAppBar(userData),
-              SliverToBoxAdapter(child: _buildProfileHeader(userData)),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _TabBarDelegate(_buildTabBar()),
-              ),
-            ],
-            body: TabBarView(
-              controller: _tabController,
-              children: [
-                _PublicReelsTab(uid: user!.uid),
-                _PrivateReelsTab(uid: user!.uid),
-                const _PlaceholderTab(
-                  icon: Icons.flight_takeoff_rounded,
-                  title: 'حجوزات الترحال',
-                  subtitle:
-                      'هنا تظهر تذاكر ومواعيد الرحلات اللي حجزتها.\nقريباً نطوّر شاشة الترحال 🌍',
-                ),
-                _SavedReelsTab(uid: user!.uid),
-                const _PlaceholderTab(
-                  icon: Icons.shopping_bag_outlined,
-                  title: 'مشترياتك من المتجر',
-                  subtitle:
-                      'هنا تظهر شحناتك وموعد الاستلام.\nقريباً نطوّر شاشة المتجر 🛒',
-                ),
-              ],
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnap) {
+        final u = authSnap.data ?? FirebaseAuth.instance.currentUser;
+        if (authSnap.connectionState == ConnectionState.waiting && u == null) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFFFE2C55)),
             ),
           );
-        },
-      ),
+        }
+        if (u == null) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Text('سجّل الدخول لعرض البروفايل',
+                  style: TextStyle(color: Colors.white70)),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: StreamBuilder<DatabaseEvent>(
+            stream: FirebaseDatabase.instance.ref('users/${u.uid}').onValue,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFFE2C55)),
+                );
+              }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'تعذّر تحميل البروفايل.\n${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                );
+              }
+              final userData = (snapshot.hasData &&
+                      snapshot.data!.snapshot.value is Map)
+                  ? Map<String, dynamic>.from(
+                      snapshot.data!.snapshot.value as Map)
+                  : <String, dynamic>{};
+
+              return NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  _buildSliverAppBar(userData),
+                  SliverToBoxAdapter(child: _buildProfileHeader(userData)),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _TabBarDelegate(_buildTabBar()),
+                  ),
+                ],
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _PublicReelsTab(uid: u.uid),
+                    _PrivateReelsTab(uid: u.uid),
+                    const _PlaceholderTab(
+                      icon: Icons.flight_takeoff_rounded,
+                      title: 'Travel bookings',
+                      subtitle:
+                          'Your trip tickets and schedules will appear here.\nTravel screen coming soon.',
+                    ),
+                    _SavedReelsTab(uid: u.uid),
+                    const _PlaceholderTab(
+                      icon: Icons.shopping_bag_outlined,
+                      title: 'Store purchases',
+                      subtitle:
+                          'Your orders and delivery updates will appear here.\nStore tab coming soon.',
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -363,33 +437,39 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
       ),
       centerTitle: true,
-      // الـ leading فيه زرّين: زوار البروفايل + مشاركة
+      // الـ leading: زوار البروفايل + جرس الإشعارات (مركز الإشعارات)
       leading: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // 👣 زوّار البروفايل
-          IconButton(
+          CustomIconButton(
             tooltip: 'زوار البروفايل',
-            icon: const Icon(Icons.directions_walk_rounded,
-                color: Colors.white, size: 26),
+            icon: Icons.directions_walk_rounded,
+            semanticsLabel: 'زر زوار البروفايل',
+            color: Colors.white,
+            size: 26,
             onPressed: _openVisitors,
           ),
+          ProfileNotificationBell(accentColor: AppColors.royalBlue),
         ],
       ),
-      leadingWidth: 56,
+      leadingWidth: 104,
       actions: [
         // 🔗 مشاركة لينك البروفايل
-        IconButton(
+        CustomIconButton(
           tooltip: 'مشاركة الملف',
-          icon: const Icon(Icons.ios_share_rounded,
-              color: Colors.white, size: 24),
+          icon: Icons.ios_share_rounded,
+          semanticsLabel: 'زر مشاركة ملف البروفايل',
+          color: Colors.white,
+          size: 24,
           onPressed: () => _shareProfile(userData),
         ),
         // ⋮ قائمة الإعدادات (تسجيل خروج + كل الإعدادات)
-        IconButton(
+        CustomIconButton(
           tooltip: 'الإعدادات',
-          icon: const Icon(Icons.more_vert_rounded,
-              color: Colors.white, size: 26),
+          icon: Icons.more_vert_rounded,
+          semanticsLabel: 'زر فتح قائمة الإعدادات',
+          color: Colors.white,
+          size: 26,
           onPressed: () => _openSettings(userData),
         ),
       ],
@@ -403,7 +483,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final pic = userData['profilePic']?.toString() ?? '';
     final name = userData['name']?.toString() ?? 'مشجع أهلاوي';
     final bio = userData['bio']?.toString() ?? '';
-    final uid = user?.uid;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -483,16 +563,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              CustomIconButton(
+                icon: Icons.edit_outlined,
+                semanticsLabel: 'زر تعديل الاسم في البروفايل',
+                color: Colors.white60,
+                size: 18,
                 onPressed: () => _editProfileField(
                   fieldKey: 'name',
                   title: 'تعديل الاسم',
                   currentValue: name,
                 ),
-                icon: const Icon(Icons.edit_outlined,
-                    color: Colors.white60, size: 18),
               ),
             ],
           ),
@@ -506,7 +586,20 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 16),
 
           // إحصاءات حية من Firebase
-          if (uid != null) _LiveProfileStats(uid: uid),
+          if (uid != null)
+            _LiveProfileStats(
+              uid: uid,
+              onOpenSocial: (kind) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => SocialGraphHubPage(
+                      uid: uid,
+                      initialKind: kind,
+                    ),
+                  ),
+                );
+              },
+            ),
 
           const SizedBox(height: 16),
 
@@ -598,8 +691,9 @@ class _PublicReelsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ReelsGridStream(
+      profileScopedUserId: uid,
       stream: FirebaseDatabase.instance
-          .ref('reels')
+          .ref('all/reels')
           .orderByChild('userId')
           .equalTo(uid)
           .onValue,
@@ -618,8 +712,9 @@ class _PrivateReelsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ReelsGridStream(
+      profileScopedUserId: uid,
       stream: FirebaseDatabase.instance
-          .ref('reels')
+          .ref('all/reels')
           .orderByChild('userId')
           .equalTo(uid)
           .onValue,
@@ -659,7 +754,8 @@ class _SavedReelsTab extends StatelessWidget {
           );
         }
         return _ReelsGridStream(
-          stream: FirebaseDatabase.instance.ref('reels').onValue,
+          profileScopedUserId: null,
+          stream: FirebaseDatabase.instance.ref('all/reels').onValue,
           filter: (m) => ids.contains(m.id),
           emptyMessage: 'لم تُعثر على الريلز المحفوظة',
         );
@@ -669,9 +765,13 @@ class _SavedReelsTab extends StatelessWidget {
 }
 
 class _LiveProfileStats extends StatelessWidget {
-  const _LiveProfileStats({required this.uid});
+  const _LiveProfileStats({
+    required this.uid,
+    required this.onOpenSocial,
+  });
 
   final String uid;
+  final void Function(SocialGraphListKind kind) onOpenSocial;
 
   @override
   Widget build(BuildContext context) {
@@ -688,7 +788,7 @@ class _LiveProfileStats extends StatelessWidget {
             );
             return StreamBuilder<DatabaseEvent>(
               stream: FirebaseDatabase.instance
-                  .ref('reels')
+                  .ref('all/reels')
                   .orderByChild('userId')
                   .equalTo(uid)
                   .onValue,
@@ -697,9 +797,19 @@ class _LiveProfileStats extends StatelessWidget {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _stat('$followingCount', 'يتابع'),
+                    _stat(
+                      '$followingCount',
+                      'يتابع',
+                      onTap: () =>
+                          onOpenSocial(SocialGraphListKind.following),
+                    ),
                     _divider(),
-                    _stat('$followersCount', 'متابعون'),
+                    _stat(
+                      '$followersCount',
+                      'متابعون',
+                      onTap: () =>
+                          onOpenSocial(SocialGraphListKind.followers),
+                    ),
                     _divider(),
                     _stat('$likes', 'إعجابات'),
                   ],
@@ -748,8 +858,8 @@ class _LiveProfileStats extends StatelessWidget {
     return sum;
   }
 
-  Widget _stat(String value, String label) {
-    return Column(
+  Widget _stat(String value, String label, {VoidCallback? onTap}) {
+    final col = Column(
       children: [
         Text(
           value,
@@ -766,6 +876,15 @@ class _LiveProfileStats extends StatelessWidget {
         ),
       ],
     );
+    if (onTap == null) return col;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: col,
+      ),
+    );
   }
 
   Widget _divider() => Padding(
@@ -781,11 +900,15 @@ class _ReelsGridStream extends StatelessWidget {
   final String emptyMessage;
   final bool lockBadge;
 
+  /// مستخدم البروفايل لتقييد السحب على ريلزه؛ null للمحفوظات (عدة مؤلفين).
+  final String? profileScopedUserId;
+
   const _ReelsGridStream({
     required this.stream,
     required this.filter,
     required this.emptyMessage,
     this.lockBadge = false,
+    this.profileScopedUserId,
   });
 
   @override
@@ -841,14 +964,21 @@ class _ReelsGridStream extends StatelessWidget {
             final r = list[index];
             return GestureDetector(
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ProfileReelPlayerPage(
-                      reels: list,
-                      initialIndex: index,
-                    ),
-                  ),
-                );
+                final scoped = profileScopedUserId?.trim();
+                if (scoped != null && scoped.isNotEmpty) {
+                  pushTikTokReelsDirect(
+                    context,
+                    initialReelId: r.id,
+                    profileOnlyUserId: scoped,
+                    seedProfileReels: list,
+                  );
+                } else {
+                  pushTikTokReelsDirect(
+                    context,
+                    initialReelId: r.id,
+                    seedProfileReels: list,
+                  );
+                }
               },
               child: Stack(
                 fit: StackFit.expand,
@@ -967,160 +1097,6 @@ class _PlaceholderTab extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════
-// MARK: Reel Player (used from grid taps)
-// ════════════════════════════════════════════════════════════════════
-
-/// تشغيل فيديو بملء الشاشة من البروفايل (تمرير عمودي بين فيديوهات الشبكة).
-class ProfileReelPlayerPage extends StatefulWidget {
-  final List<VideoModel> reels;
-  final int initialIndex;
-  final String? displayName;
-
-  const ProfileReelPlayerPage({
-    super.key,
-    required this.reels,
-    this.initialIndex = 0,
-    this.displayName,
-  });
-
-  @override
-  State<ProfileReelPlayerPage> createState() => _ProfileReelPlayerPageState();
-}
-
-class _ProfileReelPlayerPageState extends State<ProfileReelPlayerPage> {
-  late final PageController _pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            physics: const ClampingScrollPhysics(parent: PageScrollPhysics()),
-            itemCount: widget.reels.length,
-            itemBuilder: (context, index) {
-              final url = widget.reels[index].videoUrl;
-              return _SingleReelPlayer(videoUrl: url);
-            },
-          ),
-          SafeArea(
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                if (widget.displayName != null)
-                  Expanded(
-                    child: Text(
-                      widget.displayName!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SingleReelPlayer extends StatefulWidget {
-  final String videoUrl;
-  const _SingleReelPlayer({required this.videoUrl});
-
-  @override
-  State<_SingleReelPlayer> createState() => _SingleReelPlayerState();
-}
-
-class _SingleReelPlayerState extends State<_SingleReelPlayer> {
-  VideoPlayerController? _c;
-  bool _ready = false;
-  bool _err = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.videoUrl.isEmpty) {
-      _err = true;
-      return;
-    }
-    final controller =
-        VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-          ..setLooping(true);
-    _c = controller;
-    controller.initialize().then((_) {
-      if (mounted) {
-        setState(() => _ready = true);
-        controller.play();
-      }
-    }).catchError((_) {
-      if (mounted) setState(() => _err = true);
-    });
-  }
-
-  @override
-  void dispose() {
-    _c?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_err || _c == null) {
-      return const Center(
-          child: Icon(Icons.error_outline, color: Colors.white38, size: 48));
-    }
-    if (!_ready) {
-      return const Center(
-          child: CircularProgressIndicator(color: Colors.white));
-    }
-    return GestureDetector(
-      onTap: () {
-        if (_c!.value.isPlaying) {
-          _c!.pause();
-        } else {
-          _c!.play();
-        }
-        setState(() {});
-      },
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: _c!.value.size.width,
-          height: _c!.value.size.height,
-          child: VideoPlayer(_c!),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gomhor_alahly_clean_new/core/navigation/app_shell.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
+import 'package:gomhor_alahly_clean_new/core/widgets/brand_auth_snackbar.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/cubit/auth_cubit.dart';
 
 /// شاشة تسجيل الدخول برقم الهاتف + إدخال كود OTP
@@ -32,9 +33,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
       phone = phone.substring(1);
     }
     if (phone.length < 9) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('أدخل رقم هاتف صحيح')),
-      );
+      showBrandAuthErrorSnackBar(context, 'أدخل رقم هاتف صحيح');
       return;
     }
     final fullPhone = '$_countryCode$phone';
@@ -45,9 +44,7 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
   void _verifyCode() {
     final code = _otpController.text.trim();
     if (code.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('كود التحقق يتكون من 6 أرقام')),
-      );
+      showBrandAuthErrorSnackBar(context, 'كود التحقق يتكون من 6 أرقام');
       return;
     }
     context.read<AuthCubit>().verifyPhoneCode(code);
@@ -64,18 +61,14 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
             (route) => false,
           );
         } else if (state.status == AuthStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? 'خطأ'),
-              backgroundColor: AppColors.royalRed,
-            ),
+          showBrandAuthErrorSnackBar(
+            context,
+            state.errorMessage ?? 'خطأ',
           );
         } else if (state.status == AuthStatus.codeSent) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم إرسال كود التحقق إلى هاتفك'),
-              backgroundColor: AppColors.success,
-            ),
+          showBrandAuthErrorSnackBar(
+            context,
+            'تم إرسال كود التحقق إلى هاتفك',
           );
         }
       },

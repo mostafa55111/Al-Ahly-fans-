@@ -1,16 +1,32 @@
 # gomhor_alahly_clean_new
 
-A new Flutter project.
+تطبيق Flutter لجمهور النادي الأهلي — ريلز، جمهور، ترحال، وربط Firebase.
 
-## Getting Started
+## البدء
 
-This project is a starting point for a Flutter application.
+المشروع يعتمد Flutter و Firebase (Auth، Realtime Database، Messaging، وغيرها).
 
-A few resources to get you started if this is your first Flutter project:
+راجع [توثيق Flutter](https://docs.flutter.dev/) للإعداد العام.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Cloud Functions — إشعار الترحال (`notifyTravelTrip`)
+
+الكود في **`travel_system/index.js`** (codebase: `travel_system`)، المنطقة **`me-central1`**.
+
+```bash
+cd travel_system
+npm install
+cd ..
+firebase deploy --only functions:travel_system
+```
+
+- الدالة قابلة للاستدعاء (Callable v2) اسمها **`notifyTravelTrip`**.
+- العميل يستدعيها من `lib/features/travel/services/travel_cloud_push_trigger.dart` بنفس المنطقة `me-central1`.
+
+---
+
+## قاعدة البيانات اللحظية
+
+- قواعد الأمان: `database.rules.json`
+- ترحال الرحلات والشات: مسارات تحت `travel/trips/{tripId}/…` (انظر `lib/features/travel/data/travel_rtdb_paths.dart`).

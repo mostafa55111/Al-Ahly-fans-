@@ -87,17 +87,17 @@ class _MainScreenState extends State<MainScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.video_library_outlined),
               activeIcon: Icon(Icons.video_library),
-              label: 'الريلز',
+              label: 'Reels',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.sports_soccer_outlined),
               activeIcon: Icon(Icons.sports_soccer),
-              label: 'المباريات',
+              label: 'Matches',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'الملف الشخصي',
+              label: 'Profile',
             ),
           ],
         ),

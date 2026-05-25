@@ -13,11 +13,13 @@ class UploadReelRequest {
   final File videoFile;
   final String caption;
   final bool isPrivate;
+  final String visibility;
 
   const UploadReelRequest({
     required this.videoFile,
     required this.caption,
     this.isPrivate = false,
+    this.visibility = 'ahly',
   });
 }
 
@@ -41,6 +43,7 @@ class _UploadReelPageState extends State<UploadReelPage> {
   VideoPlayerController? _previewController;
   String? _errorText;
   bool _isPrivate = false;
+  String _visibilityChoice = 'ahly';
 
   @override
   void initState() {
@@ -108,6 +111,7 @@ class _UploadReelPageState extends State<UploadReelPage> {
         videoFile: _videoFile!,
         caption: _captionController.text.trim(),
         isPrivate: _isPrivate,
+        visibility: _visibilityChoice,
       ),
     );
   }
@@ -167,8 +171,7 @@ class _UploadReelPageState extends State<UploadReelPage> {
                   Expanded(
                     child: Text(
                       _errorText!,
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 13),
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
                     ),
                   ),
                 ],
@@ -204,9 +207,8 @@ class _UploadReelPageState extends State<UploadReelPage> {
               children: [
                 Icon(
                   _isPrivate ? Icons.lock_rounded : Icons.public_rounded,
-                  color: _isPrivate
-                      ? AppColors.brightRed
-                      : AppColors.luminousGold,
+                  color:
+                      _isPrivate ? AppColors.brightRed : AppColors.luminousGold,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -268,27 +270,16 @@ class _UploadReelPageState extends State<UploadReelPage> {
 
           const SizedBox(height: 20),
 
+          _AudienceChoiceToggle(
+            selected: _visibilityChoice,
+            onSelect: (v) => setState(() => _visibilityChoice = v),
+          ),
+          const SizedBox(height: 12),
+
           // زر النشر البارز — يُغلق الشاشة فوراً
-          SizedBox(
-            height: 54,
-            child: FilledButton.icon(
-              onPressed: _videoFile == null ? null : _submit,
-              icon: const Icon(Icons.cloud_upload_outlined),
-              label: const Text(
-                'نشر الريل',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.royalRed,
-                disabledBackgroundColor: Colors.white12,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
+          _HalfRedHalfWhitePublishButton(
+            enabled: _videoFile != null,
+            onPressed: _submit,
           ),
           const SizedBox(height: 10),
           Text(
@@ -318,7 +309,8 @@ class _UploadReelPageState extends State<UploadReelPage> {
           ),
         ),
         clipBehavior: Clip.antiAlias,
-        child: _previewController != null && _previewController!.value.isInitialized
+        child: _previewController != null &&
+                _previewController!.value.isInitialized
             ? Stack(
                 fit: StackFit.expand,
                 children: [
@@ -380,6 +372,218 @@ class _UploadReelPageState extends State<UploadReelPage> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _AudienceChoiceToggle extends StatelessWidget {
+  const _AudienceChoiceToggle({
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'من يمكنه مشاهدة هذا الريل؟',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _AudienceClubButton(
+          selected: selected == 'ahly',
+          onTap: () => onSelect('ahly'),
+        ),
+        const SizedBox(height: 8),
+        _AudienceAllButton(
+          selected: selected == 'all',
+          onTap: () => onSelect('all'),
+        ),
+      ],
+    );
+  }
+}
+
+class _AudienceClubButton extends StatelessWidget {
+  const _AudienceClubButton({
+    required this.selected,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.royalRed,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? AppColors.luminousGold : AppColors.royalRed,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                selected ? Icons.check_circle : Icons.circle_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'جمهورك فقط',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AudienceAllButton extends StatelessWidget {
+  const _AudienceAllButton({
+    required this.selected,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        children: [
+          SizedBox(
+            height: 48,
+            child: Row(
+              children: const [
+                Expanded(child: ColoredBox(color: AppColors.royalRed)),
+                Expanded(child: ColoredBox(color: Colors.white)),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox(
+                height: 48,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      selected ? Icons.check_circle : Icons.circle_outlined,
+                      color: AppColors.darkBlack,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'الجمهورين',
+                      style: TextStyle(
+                        color: AppColors.darkBlack,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (selected)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.luminousGold, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HalfRedHalfWhitePublishButton extends StatelessWidget {
+  const _HalfRedHalfWhitePublishButton({
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Row(
+              children: const [
+                Expanded(child: ColoredBox(color: AppColors.royalRed)),
+                Expanded(child: ColoredBox(color: Colors.white)),
+              ],
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: enabled ? onPressed : null,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.cloud_upload_outlined,
+                        color: enabled ? AppColors.darkBlack : Colors.white38,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'نشر الآن',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: enabled ? AppColors.darkBlack : Colors.white38,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,57 +1,54 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gomhor_alahly_clean_new/core/time/egypt_clock.dart';
 
-/// خدمة توقيت مزامَنة مع **خادم Firebase** بعيداً عن توقيت الجهاز.
+/// خدمة توقيت مزامَنة مع **خادم Firebase** + عرض **توقيت مصر** (Africa/Cairo).
 ///
-/// **العلاقة بـ [ServerValue.timestamp]:**
-/// - عند **الكتابة** في Realtime Database يضبط الأدمن أوقات البدء/الانتهاء
-///   باستخدام `ServerValue.timestamp` لضبط `startedAt` و`showUntil` إلخ.
-/// - عند **القراءة** من التطبيق نستخدم `/.info/serverTimeOffset` (رسمي من Firebase)
-///   لأنّه يعادل نفس ساعة الخادم التي يُولَّد عندها الـ timestamp، بدون كتابة عقدية.
-///
-/// 1) يُقرأ `serverTimeOffset` من `/.info/serverTimeOffset` (الفارق ميلي ثانية
-///    بين ساعة الجهاز ووقت خادم Firebase).
-/// 2) [serverNowUtc] = UTC مبني على offset الخادم.
-/// 3) [egyptApparent] — إزاحة **+3** كما طُلب لطابع «مصر / UTC+3» للعرض
-///    (للإنتاج لاحقاً يُفضَّل حزمة `timezone` + IANA: `Africa/Cairo`).
+/// - الكتابة في RTDB: `ServerValue.timestamp` (UTC).
+/// - القراءة: `/.info/serverTimeOffset` لمطابقة ساعة الخادم.
+/// - العرض والجوائز: [EgyptClock] من طابع الخادم.
 class EgyptServerTimeService {
   EgyptServerTimeService({FirebaseDatabase? database})
       : _db = database ?? FirebaseDatabase.instance;
 
   final FirebaseDatabase _db;
 
-  /// نافذة تصويت نسر المباراة بالميلي ثانية.
-  /// يجب أن يكون `startedAt` في جلسة التصويت قيمة **`ServerValue.timestamp`**
-  /// (أو ما يعادلها بعد القراءة كرقم) من Realtime Database حتى تطابق هذه المقارنة ساعة الخادم.
   static const int voteWindowMs = 60 * 60 * 1000;
 
   static int get voteWindowSeconds => voteWindowMs ~/ 1000;
 
   int? _offsetMs;
 
-  /// ميلي ثانية — يعاد تقديرها عند [refreshOffset].
+  bool get isSynced => _offsetMs != null;
+
+  int get offsetMs => _offsetMs ?? 0;
+
   int get _offset => _offsetMs ?? 0;
 
-  /// الوقت الحالي حسب **خادم** Firebase (Instant عالمي).
   DateTime get serverNowUtc {
     final ms = DateTime.now().millisecondsSinceEpoch + _offset;
     return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
   }
 
-  /// لعرض مبسّط بزيادة +3 ساعة (طلب المنتج: مصر/UTC+3) — **لا تُستخدم للمقارنة**
-  /// إلا بعد توحيد السياسة مع منطق منطقة زمنية فعلي.
-  DateTime get egyptApparent {
-    return serverNowUtc.add(const Duration(hours: 3));
+  /// الآن بتوقيت القاهرة حسب ساعة الخادم.
+  DateTime get egyptNow {
+    if (!EgyptClock.isReady) return serverNowUtc.add(const Duration(hours: 3));
+    return EgyptClock.cairoFromUtc(serverNowUtc);
   }
 
-  /// ميلي ثانية لحظة «الآن» على الخادم (مناسب للمقارنات).
+  /// @deprecated استخدم [egyptNow]
+  DateTime get egyptApparent => egyptNow;
+
   int get serverNowMs => DateTime.now().millisecondsSinceEpoch + _offset;
 
-  /// مزامنة offset من Realtime DB (يُفضّل مرة عند فتح التطبيق + دورياً).
-  ///
-  /// **مهم:** على Android، استدعاء `.get()` على المسارات الافتراضية مثل
-  /// `.info/serverTimeOffset` يُلقي «Invalid token in path»، لذلك نستخدم
-  /// `onValue.first` (الذي يعمل لأن `.info/*` مسارات بثّ).
+  String formatCairoClock() {
+    if (!EgyptClock.isReady) {
+      final d = egyptNow;
+      return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    }
+    return EgyptClock.formatClockHm(serverNowMs);
+  }
+
   Future<void> refreshOffset() async {
     try {
       final ref = _db.ref('.info/serverTimeOffset');
@@ -67,7 +64,7 @@ class EgyptServerTimeService {
         _offsetMs = 0;
       }
       debugPrint(
-        '[ServerTime] offsetMs=$_offsetMs, serverUtcNow=$serverNowUtc',
+        '[ServerTime] offsetMs=$_offsetMs, cairo=${formatCairoClock()}',
       );
     } catch (e) {
       debugPrint('[ServerTime] refreshOffset failed: $e — using local time');
@@ -75,7 +72,6 @@ class EgyptServerTimeService {
     }
   }
 
-  /// ينتهي التصويت عند: [startedAtServerMs] + [voteWindowMs] (مقارنة بـ [serverNowMs]).
   bool isVoteWindowOpen(int? startedAtServerMs) {
     if (startedAtServerMs == null) return false;
     return serverNowMs < startedAtServerMs + voteWindowMs;
@@ -87,26 +83,20 @@ class EgyptServerTimeService {
     return ((end - serverNowMs) / 1000).ceil();
   }
 
-  // ─── توصيات مدة عرض الاحتفال (للوحة الأدمن) — تُخزَّن في `showUntilServerMs` ───
-
-  /// نسر المباراة: يُعرض **يومين** من لحظة الإعلان (وقت خادم).
   static int matchCelebrationShowUntilMs(int announcedAtServerMs) {
     return announcedAtServerMs + const Duration(days: 2).inMilliseconds;
   }
 
-  /// نسر الشهر: يُعرض حتى نهاية نافذة شهر تقويمية تقريبية (31 يوماً من الإعلان).
   static int monthCelebrationShowUntilMs(int announcedAtServerMs) {
     return announcedAtServerMs + const Duration(days: 31).inMilliseconds;
   }
 
-  /// نسر الموسم: حتى بداية الموسم الجديد — يمرَّر `newSeasonStartServerMs` من قاعدة البيانات.
   static int seasonCelebrationShowUntilMs(int newSeasonStartServerMs) {
     return newSeasonStartServerMs;
   }
 
-  /// تنسيق `yyyymm` من [egyptApparent] لمفاتيح المجمّع الشهري.
   String get currentYyyMmFromEgyptApparent {
-    final d = egyptApparent;
+    final d = egyptNow;
     final m = d.month.toString().padLeft(2, '0');
     return '${d.year}$m';
   }

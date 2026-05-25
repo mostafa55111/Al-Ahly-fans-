@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/bloc/reels_bloc.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 
 class CommentsScreen extends StatefulWidget {
   final String videoId;
@@ -124,11 +125,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                   ),
                 ),
                 const SizedBox(width: 8.0),
-                FloatingActionButton(
-                  onPressed: _addComment,
+                CustomFAB(
                   mini: true,
+                  icon: Icons.send,
+                  semanticsLabel: 'زر إرسال التعليق',
                   backgroundColor: Colors.red,
-                  child: const Icon(Icons.send, color: Colors.white),
+                  foregroundColor: Colors.white,
+                  onPressed: _addComment,
                 ),
               ],
             ),

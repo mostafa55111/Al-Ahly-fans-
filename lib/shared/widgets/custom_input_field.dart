@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 /// Custom Text Input Field
 class CustomInputField extends StatefulWidget {
   final String label;
@@ -79,8 +79,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 ? Icon(widget.prefixIcon, color: Colors.grey)
                 : null,
             suffixIcon: widget.suffixIcon != null
-                ? IconButton(
-                    icon: Icon(widget.suffixIcon),
+                ? CustomIconButton(
+                    icon: widget.suffixIcon!,
                     onPressed: widget.onSuffixIconPressed ??
                         (widget.obscureText
                             ? () {
@@ -89,6 +89,10 @@ class _CustomInputFieldState extends State<CustomInputField> {
                                 });
                               }
                             : null),
+                    semanticsLabel: widget.obscureText
+                        ? 'إظهار أو إخفاء كلمة المرور في الحقل'
+                        : 'زر جانبي لحقل الإدخال',
+                    color: Colors.grey,
                   )
                 : null,
             border: OutlineInputBorder(
@@ -147,9 +151,11 @@ class CustomSearchField extends StatelessWidget {
         fillColor: backgroundColor,
         prefixIcon: const Icon(Icons.search, color: Colors.grey),
         suffixIcon: controller?.text.isNotEmpty ?? false
-            ? IconButton(
-                icon: const Icon(Icons.clear),
+            ? CustomIconButton(
+                icon: Icons.clear,
                 onPressed: onClear,
+                semanticsLabel: 'مسح نص البحث',
+                color: Colors.grey,
               )
             : null,
         border: OutlineInputBorder(

@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 
-/// Image Optimization Utilities
+/// سياسة موحّدة لعرض الصور المصغّرة وتقليل RAM (فك/كاش ~250px).
 class ImageOptimization {
+  /// عرض تفكيك الشبكة/الكاش للمصائرات — يتوافق مع بطاقات الإدارة (صور صغيرة).
+  static const int kThumbnailDecodeWidthPx = 250;
+
   /// تحميل صورة محسّنة مع Caching
   static Widget optimizedNetworkImage({
     required String imageUrl,
@@ -17,6 +20,8 @@ class ImageOptimization {
       width: width,
       height: height,
       fit: fit,
+      memCacheWidth: kThumbnailDecodeWidthPx,
+      maxWidthDiskCache: kThumbnailDecodeWidthPx,
       cacheManager: _getCacheManager(cacheDuration),
       placeholder: (context, url) => _buildPlaceholder(placeholder),
       errorWidget: (context, url, error) => _buildErrorWidget(),
@@ -35,23 +40,36 @@ class ImageOptimization {
       width: width,
       height: height,
       fit: fit,
-      cacheHeight: (height?.toInt() ?? 200) * 2,
-      cacheWidth: (width?.toInt() ?? 200) * 2,
+      cacheWidth: kThumbnailDecodeWidthPx,
+      cacheHeight: kThumbnailDecodeWidthPx,
     );
   }
 
-  /// صورة دائرية محسّنة
+  /// صورة دائرية محسّنة (كاش محدود كمصغّرة)
   static Widget optimizedCircleAvatar({
     required String imageUrl,
     double radius = 30,
     String? placeholder,
   }) {
-    return CircleAvatar(
-      radius: radius,
-      backgroundImage: CachedNetworkImageProvider(imageUrl),
-      onBackgroundImageError: (exception, stackTrace) {
-        debugPrint('Image loading error: $exception');
-      },
+    final d = (radius * 2).round();
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: imageUrl,
+        width: d.toDouble(),
+        height: d.toDouble(),
+        fit: BoxFit.cover,
+        memCacheWidth: kThumbnailDecodeWidthPx,
+        maxWidthDiskCache: kThumbnailDecodeWidthPx,
+        placeholder: (context, url) => CircleAvatar(
+          radius: radius,
+          backgroundColor: Colors.grey.shade300,
+        ),
+        errorWidget: (context, url, error) => CircleAvatar(
+          radius: radius,
+          backgroundColor: Colors.grey.shade400,
+          child: const Icon(Icons.error_outline),
+        ),
+      ),
     );
   }
 
@@ -68,6 +86,8 @@ class ImageOptimization {
       width: width,
       height: height,
       fit: fit,
+      memCacheWidth: kThumbnailDecodeWidthPx,
+      maxWidthDiskCache: kThumbnailDecodeWidthPx,
       fadeInDuration: fadeDuration,
       fadeOutDuration: fadeDuration,
       placeholder: (context, url) => Container(
@@ -106,29 +126,24 @@ class ImageOptimization {
   }
 
   static dynamic _getCacheManager(Duration cacheDuration) {
-    // يمكن استخدام CacheManager مخصص هنا
     return null;
   }
 }
 
 /// Video Optimization Utilities
 class VideoOptimization {
-  /// تحميل فيديو محسّن
   static String getOptimizedVideoUrl({
     required String videoUrl,
     VideoQuality quality = VideoQuality.medium,
   }) {
-    // يمكن إضافة منطق تحسين الفيديو هنا
     return videoUrl;
   }
 
-  /// حساب حجم الفيديو المناسب
   static String getVideoThumbnailUrl({
     required String videoUrl,
     int width = 200,
     int height = 200,
   }) {
-    // يمكن إضافة منطق الحصول على صورة مصغرة للفيديو
     return '$videoUrl?w=$width&h=$height';
   }
 }
@@ -140,28 +155,12 @@ enum VideoQuality {
   hd,
 }
 
-/// Network Image Cache Manager
 class NetworkImageCacheManager {
-  // static const Duration _defaultCacheDuration = Duration(days: 30);
+  static Future<void> clearCache() async {}
 
-  /// مسح الـ Cache
-  static Future<void> clearCache() async {
-    // يمكن إضافة منطق مسح الـ Cache هنا
-  }
+  static Future<int> getCacheSize() async => 0;
 
-  /// الحصول على حجم الـ Cache
-  static Future<int> getCacheSize() async {
-    // يمكن إضافة منطق حساب حجم الـ Cache هنا
-    return 0;
-  }
+  static Future<void> disableCache() async {}
 
-  /// تعطيل الـ Cache مؤقتاً
-  static Future<void> disableCache() async {
-    // يمكن إضافة منطق تعطيل الـ Cache هنا
-  }
-
-  /// تفعيل الـ Cache
-  static Future<void> enableCache() async {
-    // يمكن إضافة منطق تفعيل الـ Cache هنا
-  }
+  static Future<void> enableCache() async {}
 }

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gomhor_alahly_clean_new/core/navigation/app_shell.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
+import 'package:gomhor_alahly_clean_new/core/widgets/brand_auth_snackbar.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/cubit/auth_cubit.dart';
-
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 /// شاشة إنشاء حساب جديد عن طريق البريد الإلكتروني
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -50,11 +51,9 @@ class _RegisterPageState extends State<RegisterPage> {
             (route) => false,
           );
         } else if (state.status == AuthStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? 'خطأ'),
-              backgroundColor: AppColors.royalRed,
-            ),
+          showBrandAuthErrorSnackBar(
+            context,
+            state.errorMessage ?? 'خطأ',
           );
         }
       },
@@ -135,15 +134,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         decoration: InputDecoration(
                           labelText: 'كلمة المرور',
                           prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscure
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: AppColors.luminousGold,
-                            ),
+                          suffixIcon: CustomIconButton(
+                            icon: _obscure
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             onPressed: () =>
                                 setState(() => _obscure = !_obscure),
+                            semanticsLabel:
+                                'إظهار أو إخفاء كلمة المرور في حقل التسجيل',
+                            color: AppColors.luminousGold,
                           ),
                         ),
                         validator: (v) {

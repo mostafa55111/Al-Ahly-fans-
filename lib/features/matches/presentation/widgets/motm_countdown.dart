@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// عدّاد تنازلي لتصويت رجل المباراة.
-/// ‣ بيعرض الوقت الباقي (MM:SS) + شريط تقدّم.
-/// ‣ بيستقبل الـ remainingSeconds من الـ State + كل ال 60 دقيقة (3600s).
+/// يستخدم [ThemeData.colorScheme] ليتوافق مع هوية كل تطبيق.
 class MotmCountdown extends StatelessWidget {
   final int remainingSeconds;
   final int totalDurationSeconds;
@@ -15,9 +14,6 @@ class MotmCountdown extends StatelessWidget {
     this.closed = false,
   });
 
-  static const Color _ahlyRed = Color(0xFFE30613);
-  static const Color _ahlyGold = Color(0xFFC5A059);
-
   String _format(int s) {
     if (s < 0) s = 0;
     final m = (s ~/ 60).toString().padLeft(2, '0');
@@ -27,10 +23,13 @@ class MotmCountdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final primary = scheme.primary;
+    final secondary = scheme.secondary;
     final pct = (remainingSeconds / totalDurationSeconds).clamp(0.0, 1.0);
     final color = closed
         ? Colors.grey
-        : (remainingSeconds < 300 ? _ahlyRed : _ahlyGold);
+        : (remainingSeconds < 300 ? primary : secondary);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

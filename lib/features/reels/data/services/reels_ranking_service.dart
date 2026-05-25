@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gomhor_alahly_clean_new/core/config/app_config.dart';
 
 /// Callback يُستدعى بعد نجاح إرسال الـ stats إلى Firebase —
 /// يُستخدم لتحديث الحالة المحلية في الـ Cubit (local mirror).
@@ -116,7 +117,7 @@ class ReelsRankingService {
     }
 
     try {
-      await _database.ref('reels/$id').update(updates);
+      await _database.ref('${AppConfig.rtdbReelsPath}/$id').update(updates);
       debugPrint(
           '[Rank] 📊 flushed #$id +${shouldCountView ? 1 : 0}view +${seconds}s');
       onFlush?.call(id, shouldCountView ? 1 : 0, seconds);

@@ -6,11 +6,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gomhor_alahly_clean_new/core/design_system/theme/app_colors.dart';
 import 'package:gomhor_alahly_clean_new/core/time/egypt_server_time_service.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/data/models/active_celebration_dto.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/domain/repositories/crowd_repository.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/presentation/utils/crowd_hero_labels.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/services/celebration_seen_store.dart';
 import 'package:lottie/lottie.dart';
 
@@ -131,15 +133,17 @@ class _NesrCelebrationOverlayState extends State<NesrCelebrationOverlay>
       });
     }
     _confetti.play();
-    // الصوت يُشغَّل من [onEagleReady] عند تحميل [Lottie.asset] أو عند الاعتماد على الأيقونة الاحتياطية
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _pending == null) return;
+      if (_cheerPlayedForThisOverlay) return;
+      _cheerPlayedForThisOverlay = true;
+      HapticFeedback.mediumImpact();
+      unawaited(_playCheerSound());
+    });
   }
 
-  /// يُستدعى مرة واحدة عند جاهزية أنيميشن النسر (أو البديل البصري).
-  void _onEagleReady() {
-    if (!mounted || _pending == null || _cheerPlayedForThisOverlay) return;
-    _cheerPlayedForThisOverlay = true;
-    unawaited(_playCheerSound());
-  }
+  /// لم يعد يُستخدم لتشغيل الصوت — الصوت يبدأ مع ظهور الغلاف مباشرة.
+  void _onEagleReady() {}
 
   /// تشغيل صوت `assets/sounds/nesr_cheer.mp3` بمجرد ظهور النسر.
   /// يُتجاهل الفشل بصمت (مثلاً عند غياب الملف أو على بعض المنصات).
@@ -359,7 +363,7 @@ class _CelebrationScaffold extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        child: const Text('يلا الأهلي'),
+                        child: Text(CrowdHeroLabels.celebrationCheerCta),
                       ).animate().fadeIn(duration: 600.ms, delay: 400.ms),
                     ],
                   ),
@@ -373,9 +377,9 @@ class _CelebrationScaffold extends StatelessWidget {
   }
 
   String _titleForKind(CelebrationKind k) => switch (k) {
-        CelebrationKind.match => 'نسر المباراة',
-        CelebrationKind.month => 'نسر الشهر',
-        CelebrationKind.season => 'نسر الموسم',
+        CelebrationKind.match => CrowdHeroLabels.matchTitle,
+        CelebrationKind.month => CrowdHeroLabels.monthTitle,
+        CelebrationKind.season => CrowdHeroLabels.seasonTitle,
       };
 
   String _subtitleForKind(CelebrationKind k) => switch (k) {
@@ -453,11 +457,7 @@ class _EagleLottieState extends State<_EagleLottie> {
   /// بديل بصري خفيف عند تعذّر تحميل Lottie
   Widget _eagleIconFallback() {
     return Center(
-      child: const Icon(
-        Icons.military_tech_rounded,
-        size: 110,
-        color: AppColors.secondary,
-      )
+      child: const _ArcherWithMobileLogo()
           .animate(onPlay: (c) => c.repeat(reverse: true))
           .moveY(
             begin: 0,
@@ -469,6 +469,37 @@ class _EagleLottieState extends State<_EagleLottie> {
             duration: 1700.ms,
             color: AppColors.primary.withValues(alpha: 0.4),
           ),
+    );
+  }
+}
+
+class _ArcherWithMobileLogo extends StatelessWidget {
+  const _ArcherWithMobileLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: Stack(
+        alignment: Alignment.center,
+        children: const [
+          Icon(
+            Icons.sports_kabaddi_rounded,
+            size: 92,
+            color: AppColors.secondary,
+          ),
+          Positioned(
+            right: 18,
+            bottom: 22,
+            child: Icon(
+              Icons.phone_iphone_rounded,
+              size: 30,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -582,7 +613,7 @@ class _FireworksCanvasState extends State<_FireworksCanvas>
   double _nextBurstIn = 0.25; // ثواني حتى الانفجار التالي
   Size _canvasSize = Size.zero;
 
-  /// لوحة ألوان النسر والأهلي: أحمر + ذهبي + أبيض
+  /// لوحة ألوان النسر والزمالك: أحمر + ذهبي + أبيض
   static const List<Color> _palette = [
     Color(0xFFD4AF37), // ذهبي أساسي
     Color(0xFFFFD54F), // ذهبي فاتح

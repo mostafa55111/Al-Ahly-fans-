@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
 
@@ -10,12 +13,22 @@ import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
 /// - عرض loading indicator لو الـ controller لم يتهيأ بعد.
 /// - تمرير نقرات المستخدم (tap / double tap) للـ parent.
 /// - عرض شريط تقدم مخصص وإيكونة play overlay.
+/// - تتبّع عتبة المشاهدة (≥70%) لتسجيل مشاهدة مؤهّلة في الخوارزمية (مرّة واحدة لكل جلسة عرض).
 class TikTokReelVideo extends StatefulWidget {
   final VideoPlayerController? controller;
   final bool isActive;
   final bool hasError;
   final VoidCallback? onTogglePlayPause;
   final VoidCallback? onDoubleTap;
+
+  /// يُستدعى مرة واحدة عند وصول التقديم إلى ≥ [watchThresholdFraction] من مدة الفيديو.
+  final VoidCallback? onWatchThresholdReached;
+
+  /// ضغط مطوّل (خيارات مثل «غير مهتم»).
+  final VoidCallback? onLongPress;
+
+  /// نسبة من مدة الفيديو (0–1) تُعتبر «مشاهدة مؤهّلة».
+  final double watchThresholdFraction;
 
   const TikTokReelVideo({
     super.key,
@@ -24,6 +37,9 @@ class TikTokReelVideo extends StatefulWidget {
     this.hasError = false,
     this.onTogglePlayPause,
     this.onDoubleTap,
+    this.onWatchThresholdReached,
+    this.onLongPress,
+    this.watchThresholdFraction = 0.7,
   });
 
   @override
@@ -32,6 +48,9 @@ class TikTokReelVideo extends StatefulWidget {
 
 class _TikTokReelVideoState extends State<TikTokReelVideo> {
   VideoPlayerController? _listened;
+  bool _thresholdReported = false;
+  int _tapCount = 0;
+  Timer? _tapTimer;
 
   @override
   void initState() {
@@ -43,15 +62,38 @@ class _TikTokReelVideoState extends State<TikTokReelVideo> {
   void didUpdateWidget(covariant TikTokReelVideo oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
+      _thresholdReported = false;
       _detachListener();
       _attachListener(widget.controller);
+    }
+    if (!widget.isActive && oldWidget.isActive) {
+      _thresholdReported = false;
     }
   }
 
   @override
   void dispose() {
+    _tapTimer?.cancel();
     _detachListener();
     super.dispose();
+  }
+
+  void _onVideoTap() {
+    _tapCount++;
+    if (_tapCount == 1) {
+      _tapTimer?.cancel();
+      _tapTimer = Timer(const Duration(milliseconds: 320), () {
+        if (!mounted) return;
+        if (_tapCount == 1) {
+          widget.onTogglePlayPause?.call();
+        }
+        _tapCount = 0;
+      });
+    } else if (_tapCount == 2) {
+      _tapTimer?.cancel();
+      _tapCount = 0;
+      widget.onDoubleTap?.call();
+    }
   }
 
   void _attachListener(VideoPlayerController? c) {
@@ -67,8 +109,28 @@ class _TikTokReelVideoState extends State<TikTokReelVideo> {
 
   void _onControllerUpdate() {
     if (!mounted) return;
-    // نُعيد البناء عند تغيّر حالة التشغيل/التهيئة فقط
+    _maybeReportWatchThreshold();
     setState(() {});
+  }
+
+  /// لو شاهد المستخدم ≥70% من الريل نبلّغ الطبقة العليا مرة واحدة (Firestore / الخوارزمية).
+  void _maybeReportWatchThreshold() {
+    if (_thresholdReported ||
+        !widget.isActive ||
+        widget.onWatchThresholdReached == null) {
+      return;
+    }
+    final c = widget.controller;
+    if (c == null || !c.value.isInitialized || c.value.hasError) return;
+    final total = c.value.duration;
+    if (total.inMilliseconds <= 0) return;
+    final pos = c.value.position;
+    final limit =
+        (total.inMilliseconds * widget.watchThresholdFraction).round();
+    if (pos.inMilliseconds >= limit) {
+      _thresholdReported = true;
+      widget.onWatchThresholdReached!();
+    }
   }
 
   @override
@@ -77,11 +139,16 @@ class _TikTokReelVideoState extends State<TikTokReelVideo> {
     final initialized = c != null && c.value.isInitialized;
     final isPaused = initialized && !c.value.isPlaying && widget.isActive;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: widget.onTogglePlayPause,
-      onDoubleTap: widget.onDoubleTap,
-      child: Stack(
+    return Semantics(
+      label: 'فيديو الريل: اضغط للتشغيل أو الإيقاف المؤقت',
+      button: true,
+      child: Tooltip(
+        message: 'تشغيل أو إيقاف مؤقت',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _onVideoTap,
+          onLongPress: widget.onLongPress,
+          child: Stack(
         fit: StackFit.expand,
         children: [
           // خلفية سوداء
@@ -145,23 +212,30 @@ class _TikTokReelVideoState extends State<TikTokReelVideo> {
             ),
         ],
       ),
+        ),
+      ),
     );
   }
 }
 
-/// Loading indicator شفاف — يُعرض فقط أثناء تحميل الفيديو الحالي
+/// تحميل الفيديو — تأثير Shimmer بأسلوب تيك توك (مع دلالات لاختبارات Robo).
 class _VideoLoadingView extends StatelessWidget {
   const _VideoLoadingView();
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: SizedBox(
-        width: 38,
-        height: 38,
-        child: CircularProgressIndicator(
-          color: AppColors.luminousGold,
-          strokeWidth: 2.5,
+    return Semantics(
+      label: 'جاري تحميل الفيديو، يرجى الانتظار',
+      excludeSemantics: false,
+      child: Tooltip(
+        message: 'تحميل الفيديو قيد التنفيذ',
+        child: Shimmer.fromColors(
+          baseColor: Colors.white.withValues(alpha: 0.06),
+          highlightColor: Colors.white.withValues(alpha: 0.18),
+          period: const Duration(milliseconds: 1100),
+          child: Container(
+            color: Colors.white.withValues(alpha: 0.04),
+          ),
         ),
       ),
     );

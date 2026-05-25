@@ -18,6 +18,8 @@ dependencies:
   firebase_storage: ^11.6.9
   cloud_functions: ^4.6.0
   cloud_firestore: ^4.14.0
+  firebase_remote_config: ^4.3.8
+  firebase_crashlytics: ^3.5.7
   firebase_messaging: ^14.7.9
   flutter_local_notifications: ^17.2.3
 
@@ -57,6 +59,7 @@ dependencies:
   connectivity_plus: ^5.0.2
   shared_preferences: ^2.2.3
   intl: ^0.19.0
+  timezone: ^0.9.4
   crypto: ^3.0.3
   flutter_cache_manager: ^3.3.1
   path_provider: ^2.1.3
@@ -85,6 +88,14 @@ dependencies:
   smooth_page_indicator: ^1.1.0
   cloudinary_public: ^0.23.1
 
+  # شاشة الإقلاع الأصلية: ضرورية لاستدعاء FlutterNativeSplash.remove() في وقت التشغيل
+  flutter_native_splash: ^2.4.4
+  ffmpeg_kit_flutter_new_https: ^2.1.0
+
+  # ترحال: QR للمشجع + مسح للأدمن
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -93,6 +104,9 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   build_runner: ^2.13.1
+  flutter_launcher_icons: ^0.14.4
+  image: ^4.5.4
+  fake_cloud_firestore: ^2.5.2
 
 flutter:
   uses-material-design: true
@@ -103,9 +117,33 @@ flutter:
   #   - assets/sounds/nesr_cheer.mp3              ← صوت احتفال النسر
   assets:
     - assets/images/
+    - assets/images/stadiums/
     - assets/icons/
     - assets/animations/
     - assets/sounds/
+    # إعدادات Cloudinary لمشروع جمهور الأهلي فقط — لا تشاركه مع تطبيق الزمالك
+    - assets/config/cloudinary_gomhor_ahly.json
     # مسارات صريحة (إلى جانب المجلدات أعلاه) لسهولة المراجعة والتأكد من التضمين:
     - assets/animations/eagle_animation.lottie
     - assets/sounds/nesr_cheer.mp3
+
+# الأيقونات + شاشة الإقلاع الأصلية:
+#   dart run flutter_launcher_icons -f flutter_launcher_icons.yaml
+#   dart run flutter_native_splash:create
+
+flutter_native_splash:
+  color: "#081B3F"
+  image: assets/images/ahly_logo.png
+  branding: assets/images/fan_technology_logo.png
+  branding_mode: bottom
+  branding_bottom_padding: 36
+  android: true
+  ios: true
+  web: false
+  fullscreen: false
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
+  android_12:
+    color: "#081B3F"
+    image: assets/images/ahly_logo.png
+    branding: assets/images/fan_technology_logo.png

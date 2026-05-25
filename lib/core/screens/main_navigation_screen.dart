@@ -81,17 +81,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.video_library_outlined),
               activeIcon: Icon(Icons.video_library),
-              label: 'الريلز',
+              label: 'Reels',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_alt_outlined),
               activeIcon: Icon(Icons.people_alt),
-              label: 'الجمهور',
+              label: 'Crowd',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'الملف الشخصي',
+              label: 'Profile',
             ),
           ],
         ),

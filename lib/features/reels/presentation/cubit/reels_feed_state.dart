@@ -57,6 +57,9 @@ class FeedData extends Equatable {
 const _unset = Object();
 
 class ReelsFeedState extends Equatable {
+  /// وضع الجمهور في فيد «لك»: محلي (نادي التطبيق) أو عالمي (دمج الأهلي والزمالك).
+  final bool isGlobalAudience;
+
   /// الفيد المعروض حالياً للمستخدم
   final FeedType currentFeed;
 
@@ -67,6 +70,7 @@ class ReelsFeedState extends Equatable {
   final FeedData following;
 
   const ReelsFeedState({
+    this.isGlobalAudience = false,
     this.currentFeed = FeedType.forYou,
     this.forYou = const FeedData(),
     this.following = const FeedData(),
@@ -86,11 +90,13 @@ class ReelsFeedState extends Equatable {
   bool get hasReachedEnd => activeFeed.hasReachedEnd;
 
   ReelsFeedState copyWith({
+    bool? isGlobalAudience,
     FeedType? currentFeed,
     FeedData? forYou,
     FeedData? following,
   }) {
     return ReelsFeedState(
+      isGlobalAudience: isGlobalAudience ?? this.isGlobalAudience,
       currentFeed: currentFeed ?? this.currentFeed,
       forYou: forYou ?? this.forYou,
       following: following ?? this.following,
@@ -98,5 +104,5 @@ class ReelsFeedState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [currentFeed, forYou, following];
+  List<Object?> get props => [isGlobalAudience, currentFeed, forYou, following];
 }

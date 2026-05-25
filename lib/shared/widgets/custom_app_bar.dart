@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'custom_button.dart';
+
 /// Custom App Bar Widget
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -37,9 +39,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: backgroundColor,
       elevation: elevation,
       leading: showBackButton
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back),
+          ? CustomIconButton(
+              icon: Icons.arrow_back,
               onPressed: onBackPressed ?? () => Navigator.pop(context),
+              semanticsLabel: 'زر الرجوع للشاشة السابقة',
+              tooltip: 'رجوع',
+              color: textColor,
             )
           : null,
       actions: actions,

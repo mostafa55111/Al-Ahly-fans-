@@ -1,0 +1,13 @@
+{
+  "motm": {
+    "$fixtureId": {
+      "votes": {
+        "$voteUid": {
+          ".read": true,
+          ".write": "auth != null && auth.uid === $voteUid",
+          ".validate": "newData.exists() && newData.isNumber() && newData.val() > 0 && root.child('motm').child($fixtureId).child('players').child(newData.val() + '').exists() && root.child('motm').child($fixtureId).child('endsAt').isNumber() && root.child('motm').child($fixtureId).child('endsAt').val() > now"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+// ─── Backend authority prep (MERGE manually — do NOT deploy alone) ───
+// Future: finalize/aggregate owned by Cloud Functions service account.
+//
+// "match_votes": {
+//   "$club": {
+//     "active_match": {
+//       ".write": "auth != null && (
+//         root.child('admins').child(auth.uid).exists()
+//         || auth.token.admin == true
+//       )",
+//       "awardsFinalized": {
+//         ".write": "false"
+//       }
+//     },
+//     "user_votes": {
+//       "$matchId": {
+//         "$uid": {
+//           ".write": "!data.exists() && auth.uid == $uid",
+//           ".read": "auth.uid == $uid"
+//         }
+//       }
+//     }
+//   }
+// },
+// "awards": {
+//   "$club": {
+//     "matches": {
+//       "$year": {
+//         "$matchId": {
+//           ".write": "auth != null && (
+//             root.child('admins').child(auth.uid).exists()
+//             || auth.token.backend_authority == true
+//           )",
+//           ".validate": "newData.child('finalizedAt').exists()"
+//         }
+//       }
+//     }
+//   }
+// },
+// "match_vote_shards": {
+//   "$club": {
+//     "$matchId": {
+//       "$playerId": {
+//         "$shardId": {
+//           "count": {
+//             ".write": "auth != null && !root.child('match_votes').child($club)
+//               .child('active_match').child('awardsFinalized').val() == true"
+//           }
+//         }
+//       }
+//     }
+//   }
+// }

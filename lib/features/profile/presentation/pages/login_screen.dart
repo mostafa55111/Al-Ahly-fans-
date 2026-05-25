@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   FadeInDown(
                     child: const CircleAvatar(
                       radius: 50,
-                      backgroundImage: AssetImage('assets/images/logo.png'),
+                      backgroundImage: AssetImage('assets/images/ahly_logo.png'),
                     ),
                   ),
                   const SizedBox(height: 30),

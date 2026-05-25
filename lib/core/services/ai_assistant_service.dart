@@ -1,59 +1,61 @@
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:gomhor_alahly_clean_new/core/config/app_config.dart';
+import 'package:gomhor_alahly_clean_new/core/services/gemini/gemini_client.dart';
 
+/// مساعد FAN Technology — خبير كروي وتقني للتحكم في تجربة التطبيق.
 class AiAssistantService {
   static const String _systemPrompt =
-      '''أنت مساعد ذكي متخصص في النادي الأهلي المصري. 
-تجيب على جميع الأسئلة المتعلقة بـ:
-- تاريخ النادي الأهلي وإنجازاته (41 بطولة محلية، 8 بطولات إفريقية)
-- إحصائيات اللاعبين والفريق الحالي
-- مواعيد المباريات والنتائج السابقة
-- أسطورة النادي والمدربين الكبار
-- معلومات عن الملعب والجماهير
+      '''أنت "المساعد الذكي الرسمي" لشركة FAN Technology في تطبيق جمهور الأهلي.
+أنت خبير كروي وتقني: تفهم الدوري المصري، البطولات الأفريقية، وبنية بيانات التطبيق (Realtime Database).
 
-كن ودياً وحماسياً في الإجابات، واستخدم كلمات تشجيعية. إذا لم تعرف الإجابة، قل "أنا لا أملك هذه المعلومة الآن، لكن يمكنك البحث عنها في الموقع الرسمي للنادي."
-''';
+شخصيتك: مصري، واضح، عملي، بحماس أهلاوي أصيل بدون مبالغة.
+أنت تساعد الإدارة والمستخدمين على اتخاذ قرارات سريعة بناءً على البيانات.
 
-  static late GenerativeModel _model;
+هيكل البيانات المهم في التطبيق:
+- reels، users، follows، motm، best_player، travel، marketplace، app_controls، eagle_nesr
+
+قدراتك النظرية (تنفيذها يتطلب تأكيد الإدارة في الواقع):
+- اقتراح تعديلات على app_controls (تفعيل/تعطيل أقسام)
+- تفسير أسعار المنتجات أو عمولة المنصة عند سؤال المستخدم
+- صياغة نصوص إشعارات Push بناءً على سياق المباراة
+
+عند رفع صورة (تذكرة، منتج، لقطة شاشة): حلّل المحتوى بدقة واذكر ما تراه وما لا يمكن استنتاجه.
+أي طلب لحذف/تعديل بيانات حقيقية: اطلب تأكيداً صريحاً قبل أن تصف الإجراء.
+
+جاوب بالعربي المصري، بشكل موجز، واقترح دائماً "الخطوة الجاية" لو كانت مفيدة.''';
+
+  static late GeminiClient _client;
   static bool _initialized = false;
 
-  /// تهيئة خدمة الـ AI
+  /// تهيئة خدمة الـ AI (المفتاح من [AppConfig] أو المعامل)
   static void initialize([String? apiKey]) {
     if (!_initialized) {
-      final key = apiKey ?? AppConfig.geminiApiKey;
-      _model = GenerativeModel(
-        model: 'gemini-pro',
-        apiKey: key,
+      _client = GeminiClient(
+        apiKey: apiKey ?? AppConfig.geminiApiKey,
       );
       _initialized = true;
     }
   }
 
-  /// إعادة تعيين المفتاح يدوياً إذا لزم الأمر
   static void resetApiKey(String key) {
-    _model = GenerativeModel(
-      model: 'gemini-pro',
-      apiKey: key,
-    );
+    _client = GeminiClient(apiKey: key);
     _initialized = true;
   }
 
-  /// جلب إجابة ذكية من Gemini
   static Future<String> getSmartAnswer(String userQuery) async {
     try {
       if (!_initialized) {
         return "عذراً، لم تتم تهيئة خدمة الـ AI. يرجى المحاولة لاحقاً.";
       }
+      if (!_client.isConfigured) {
+        return "تعذر تشغيل Gemini. تحقق من GEMINI_API_KEY في secrets.local.json أو عند البناء.";
+      }
 
-      final content = [
-        Content.text(_systemPrompt),
-        Content.text(userQuery),
-      ];
-
-      final response = await _model.generateContent(content);
-
-      return response.text ?? "عذراً، لم أستطع الإجابة على سؤالك.";
+      final text = await _client.generateText(
+        userPrompt: userQuery,
+        systemPrompt: _systemPrompt,
+      );
+      return text ?? "عذراً، لم أستطع الإجابة على سؤالك.";
     } catch (e) {
       if (kDebugMode) {
         debugPrint('خطأ في AI Assistant: $e');
@@ -62,34 +64,53 @@ class AiAssistantService {
     }
   }
 
-  /// البحث عن لاعب معين وإرجاع معلومات عنه
+  /// تحليل صورة (تذكرة، منتج، إلخ) مع سؤال المستخدم.
+  static Future<String> analyzeImage({
+    required Uint8List imageBytes,
+    required String mimeType,
+    String userPrompt =
+        'حلّل الصورة بالتفصيل. إذا كانت تذكرة أو منتجاً فاذكر ما تراه بوضوح.',
+  }) async {
+    try {
+      if (!_initialized || !_client.isConfigured) {
+        return "تعذر التحليل: تحقق من مفتاح Gemini.";
+      }
+      final text = await _client.generateWithImage(
+        userPrompt: userPrompt,
+        imageBytes: imageBytes,
+        mimeType: mimeType,
+        systemPrompt: _systemPrompt,
+      );
+      return text ?? "لم أستطع تحليل الصورة.";
+    } catch (e) {
+      if (kDebugMode) debugPrint('analyzeImage: $e');
+      return "حدث خطأ أثناء تحليل الصورة.";
+    }
+  }
+
   static Future<String> searchPlayer(String playerName) async {
     final query =
         "أخبرني عن لاعب النادي الأهلي $playerName. ما هي إحصائياته وإنجازاته؟";
     return await getSmartAnswer(query);
   }
 
-  /// الحصول على معلومات عن مباراة قادمة
   static Future<String> getMatchInfo(String opponent) async {
     final query =
         "ما هي معلومات المباراة القادمة للأهلي ضد $opponent؟ متى موعدها وأين ستقام؟";
     return await getSmartAnswer(query);
   }
 
-  /// الحصول على إحصائيات النادي
   static Future<String> getAhlyStats() async {
     const query =
         "أخبرني عن إحصائيات النادي الأهلي الشاملة (البطولات، الألقاب، أفضل اللاعبين)";
     return await getSmartAnswer(query);
   }
 
-  /// الحصول على تنبيهات وأخبار مهمة
   static Future<String> getImportantNews() async {
     const query = "ما هي أهم الأخبار والتطورات الحالية في النادي الأهلي؟";
     return await getSmartAnswer(query);
   }
 
-  /// تحليل أداء اللاعب
   static Future<String> analyzePlayerPerformance(String playerName) async {
     final query =
         "قم بتحليل أداء اللاعب $playerName في آخر 5 مباريات. ما هي نقاط القوة والضعف؟";

@@ -1,0 +1,25 @@
+---
+description: Mirror features between zamalekawy and gomhor_alahly_v2; identity-only divergence.
+alwaysApply: true
+---
+
+# Twin repos — parity (زمالكاوي ↔ جمهور الأهلي)
+
+These Flutter apps are **sibling codebases** and must stay **functionally in sync**:
+
+- `E:\app\new_ran\zamalekawy` (Zamalek build)
+- `E:\app\new_ran\gomhor_alahly_v2` (Al Ahly build)
+
+## After any substantive change
+
+1. **Mirror** the same logical change into the other repo (same files under `lib/` when paths exist in both).
+2. Run **`flutter analyze`** on touched areas in **both** workspaces before considering the task done.
+
+## Allowed differences (identity / build only)
+
+- **`FanAppIdentity`** / `registryAppId` (`ahly` vs `zamalek`) and code that branches on it.
+- **Firebase paths** and config that are intentionally club-specific (see root `.cursorrules` in zamalekawy if present).
+- **Branding**: colors, logos, default assets, copy that names the club.
+- **Build identity**: `firebase_options.dart`, `google-services.json` / `GoogleService-Info.plist`, applicationId / bundle ID, store listings.
+
+Do **not** leave one app ahead on shared features (crowd, match votes, cards, cubits, DTOs, widgets) unless the divergence is explicitly one of the bullets above.

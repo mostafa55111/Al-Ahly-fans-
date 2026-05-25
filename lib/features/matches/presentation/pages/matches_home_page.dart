@@ -13,6 +13,7 @@ import 'package:gomhor_alahly_clean_new/features/matches/presentation/widgets/fi
 import 'package:gomhor_alahly_clean_new/features/matches/presentation/widgets/next_match_focus_section.dart';
 import 'package:gomhor_alahly_clean_new/features/matches/presentation/widgets/motm_countdown.dart';
 import 'package:gomhor_alahly_clean_new/features/matches/presentation/widgets/motm_player_card.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 
 /// ═════════════════════════════════════════════════════════════════
 /// MatchesHomePage — الشاشة الرئيسية للمباريات (تبويبتين)
@@ -58,8 +59,10 @@ class _MatchesHomeBody extends StatelessWidget {
                 fontSize: 18),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            CustomIconButton(
+              icon: Icons.refresh_rounded,
+              semanticsLabel: 'زر تحديث المباريات والتصويت',
+              color: Colors.white,
               onPressed: () {
                 context.read<MatchesCubit>().loadAll(force: true);
                 context.read<MotmVotingCubit>().bootstrap();

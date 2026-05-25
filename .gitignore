@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local secrets (never commit)
+secrets.local.json
+
+# Cloudinary — الملف الذي يحتوي المفاتيح الحقيقية (القالب المرجعي: cloudinary*.example.json)
+assets/config/cloudinary_gomhor_ahly.json

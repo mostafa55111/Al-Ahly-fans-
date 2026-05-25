@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gomhor_alahly_clean_new/core/firebase/shared_firebase_collections.dart';
 
 /// Service to seed Firestore with sample reel data for testing
 class FirestoreSeeder {
@@ -9,10 +10,11 @@ class FirestoreSeeder {
   Future<void> seedSampleReels() async {
     try {
       debugPrint('🌱 Seeding Firestore with sample reels...');
-      
+
       final sampleReels = [
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=1',
           'caption': 'أهداف الأهلي المميزة في مباراة اليوم ⚽',
           'userId': 'user_1',
@@ -26,7 +28,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=2',
           'caption': 'لحظات رائعة من تدريبات الفريق اليوم 🏃‍♂️',
           'userId': 'user_2',
@@ -40,7 +43,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=3',
           'caption': 'احتفالات الجمهور بعد الفوز 🎉',
           'userId': 'user_3',
@@ -54,7 +58,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=4',
           'caption': 'مقابلة مع اللاعب بعد المباراة 🎤',
           'userId': 'user_4',
@@ -68,7 +73,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=5',
           'caption': 'أجمل لحظات المباراة ⭐',
           'userId': 'user_5',
@@ -82,7 +88,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=6',
           'caption': 'خلفية الكواليس 🎬',
           'userId': 'user_6',
@@ -96,7 +103,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=7',
           'caption': 'تحليل أداء الفريق 📊',
           'userId': 'user_7',
@@ -110,7 +118,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=8',
           'caption': 'إحماء الفريق قبل المباراة 🏋️‍♂️',
           'userId': 'user_8',
@@ -124,7 +133,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=9',
           'caption': 'لمسة تقنية رائعة 🎯',
           'userId': 'user_9',
@@ -138,7 +148,8 @@ class FirestoreSeeder {
           'updatedAt': Timestamp.now(),
         },
         {
-          'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+          'videoUrl':
+              'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
           'thumbnailUrl': 'https://picsum.photos/400/700?random=10',
           'caption': 'روح الفريق لا تقهر 💪',
           'userId': 'user_10',
@@ -156,11 +167,14 @@ class FirestoreSeeder {
       // Add sample reels to Firestore
       for (int i = 0; i < sampleReels.length; i++) {
         final reelData = sampleReels[i];
-        await _firestore.collection('reels').add(reelData);
+        await _firestore
+            .collection(SharedFirebaseCollections.reels)
+            .add(reelData);
         debugPrint('🌱 Added sample reel ${i + 1}/10');
       }
 
-      debugPrint('✅ Successfully seeded Firestore with ${sampleReels.length} sample reels!');
+      debugPrint(
+          '✅ Successfully seeded Firestore with ${sampleReels.length} sample reels!');
     } catch (e) {
       debugPrint('❌ Error seeding Firestore: $e');
       rethrow;
@@ -171,13 +185,14 @@ class FirestoreSeeder {
   Future<void> clearSampleData() async {
     try {
       debugPrint('🧹 Clearing sample data from Firestore...');
-      
-      final reelsSnapshot = await _firestore.collection('reels').get();
-      
+
+      final reelsSnapshot =
+          await _firestore.collection(SharedFirebaseCollections.reels).get();
+
       for (final doc in reelsSnapshot.docs) {
         await doc.reference.delete();
       }
-      
+
       debugPrint('✅ Cleared ${reelsSnapshot.docs.length} reels from Firestore');
     } catch (e) {
       debugPrint('❌ Error clearing sample data: $e');
@@ -188,7 +203,10 @@ class FirestoreSeeder {
   /// Check if Firestore has sample data
   Future<bool> hasSampleData() async {
     try {
-      final snapshot = await _firestore.collection('reels').limit(1).get();
+      final snapshot = await _firestore
+          .collection(SharedFirebaseCollections.reels)
+          .limit(1)
+          .get();
       return snapshot.docs.isNotEmpty;
     } catch (e) {
       debugPrint('❌ Error checking sample data: $e');

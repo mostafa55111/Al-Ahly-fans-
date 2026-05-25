@@ -81,7 +81,23 @@
 
     "best_player": {
       ".read": true,
-      ".write": false
+      ".write": false,
+      ".indexOn": ["position"]
+    },
+
+    "app_analytics": {
+      "screen_visits": {
+        ".indexOn": [".value"]
+      }
+    },
+
+    "moderation": {
+      "comment_report_counts": {
+        ".indexOn": [".value"]
+      },
+      "reel_report_counts": {
+        ".indexOn": [".value"]
+      }
     },
 
     "eagle_nesr": {
@@ -117,6 +133,39 @@
       "active_celebration": {
         ".read": true,
         ".write": false
+      }
+    },
+
+    "travel": {
+      "trips": {
+        ".indexOn": ["governorateId"]
+      },
+      "users": {
+        "$uid": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+
+    "marketplace": {
+      "settings": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
+      "merchants": {
+        ".indexOn": ["audienceScore", "slug"],
+        "$merchantId": {
+          ".read": "auth != null",
+          ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && data.child('ownerUid').val() === auth.uid))"
+        }
+      },
+      "products": {
+        ".indexOn": ["updatedAt", "merchantId"],
+        "$productId": {
+          ".read": "auth != null",
+          ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && data.child('ownerUid').val() === auth.uid))"
+        }
       }
     },
 

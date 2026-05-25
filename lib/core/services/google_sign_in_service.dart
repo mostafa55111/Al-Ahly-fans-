@@ -1,13 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:gomhor_alahly_clean_new/core/config/firebase_oauth_config.dart';
 
 /// Service for handling Google Sign-In authentication
 class GoogleSignInService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // clientId is optional for web but required for mobile
-    // The SHA-1 key from your debug report: FC:44:81:11:59:88:A7:D2:99:F6:61:16:B4:04:AD:23:33:32:5D:76
-    // This key is automatically used by Firebase when configured
+    scopes: const <String>['email', 'profile'],
+    serverClientId: FirebaseOAuthConfig.firebaseAuthWebClientId,
   );
 
   /// Sign in with Google
@@ -24,6 +26,11 @@ class GoogleSignInService {
       // Obtain the auth details from the Google Sign-In
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
+      if (googleAuth.idToken == null && kDebugMode) {
+        debugPrint(
+          'GoogleSignInService: idToken null — تحقق من Web Client ID (Firebase)',
+        );
+      }
       // Create a new credential
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -37,7 +44,20 @@ class GoogleSignInService {
         user: userCredential.user!,
         isNewUser: userCredential.additionalUserInfo?.isNewUser ?? false,
       );
-    } catch (e) {
+    } on FirebaseAuthException catch (e, st) {
+      debugPrint('GoogleSignInService FirebaseAuthException: $e\n$st');
+      throw AuthException('Google Sign-In Firebase: ${e.code} ${e.message}');
+    } on PlatformException catch (e, st) {
+      debugPrint(
+        'GoogleSignInService PlatformException code=${e.code} '
+        'message=${e.message} details=${e.details}\n$st',
+      );
+      throw AuthException(
+        'Google Sign-In فشل (${e.code}): ${e.message ?? ''} — '
+        'إن كان 10 أو sign_in_failed راجع SHA وpackage في Firebase',
+      );
+    } catch (e, st) {
+      debugPrint('GoogleSignInService: $e\n$st');
       throw AuthException('Google Sign-In failed: ${e.toString()}');
     }
   }

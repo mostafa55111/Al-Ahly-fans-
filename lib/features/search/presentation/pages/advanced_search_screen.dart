@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:gomhor_alahly_clean_new/features/search/presentation/pages/ai_consultant_page.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 
 /// شاشة البحث المتقدم - للبحث عن المباريات واللاعبين والريلز
 class AdvancedSearchScreen extends StatefulWidget {
@@ -275,6 +277,21 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
               ?.copyWith(color: Colors.white),
         ),
         centerTitle: true,
+        actions: [
+          CustomIconButton(
+            icon: Icons.psychology_outlined,
+            semanticsLabel: 'فتح شاشة المستشار الكروي الذكي',
+            tooltip: 'المستشار الذكي',
+            color: Colors.white,
+            onPressed: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => const AIConsultantPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -294,9 +311,10 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                   prefixIcon: Icon(Icons.search,
                       color: Theme.of(context).colorScheme.primary),
                   suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear,
-                              color: Theme.of(context).colorScheme.primary),
+                      ? CustomIconButton(
+                          icon: Icons.clear,
+                          semanticsLabel: 'زر مسح نص البحث',
+                          color: Theme.of(context).colorScheme.primary,
                           onPressed: () {
                             _searchController.clear();
                             setState(() {

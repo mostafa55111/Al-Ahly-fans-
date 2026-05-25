@@ -1,0 +1,88 @@
+// ─── Phase 5 production rules (MERGE manually — do NOT deploy alone) ───
+//
+// Owner emails: app_configs/owner_emails (array)
+// Authority lease: authority_runtime/{club}/{matchId}
+//
+// "app_configs": {
+//   "owner_emails": {
+//     ".read": "auth != null",
+//     ".write": false
+//   }
+// },
+// "authority_runtime": {
+//   "$club": {
+//     "$matchId": {
+//       ".read": "auth != null",
+//       ".write": "auth != null && (
+//         root.child('app_configs/owner_emails').child(auth.token.email).exists()
+//         || auth.token.backend_authority == true
+//       )"
+//     }
+//   }
+// },
+// "match_votes": {
+//   "$club": {
+//     "active_match": {
+//       "awardsFinalized": {
+//         ".validate": "newData.val() == true ? (
+//           !data.parent().child('votingEnabled').val()
+//         ) : true"
+//       },
+//       "status": {
+//         ".validate": "newData.val() == 'closed' || newData.val() == 'live' || newData.val() == 'finalizing'"
+//       }
+//     },
+//     "user_votes": {
+//       "$matchId": {
+//         "$uid": {
+//           ".write": "!data.exists() && auth.uid == $uid",
+//           ".read": "auth.uid == $uid"
+//         }
+//       }
+//     }
+//   }
+// },
+// "match_vote_shards": {
+//   "$club": {
+//     "$matchId": {
+//       "$playerId": {
+//         "$shardId": {
+//           "count": {
+//             ".write": "auth != null && (
+//               !root.child('match_votes').child($club).child('active_match')
+//                 .child('awardsFinalized').val()
+//             )",
+//             ".validate": "newData.isNumber() && newData.val() >= 0"
+//           }
+//         }
+//       }
+//     }
+//   }
+// },
+// "awards": {
+//   "$club": {
+//     "matches": {
+//       "$year": {
+//         "$matchId": {
+//           ".write": "auth != null && (
+//             auth.token.backend_authority == true
+//             || root.child('app_configs/owner_emails').hasChild(auth.token.email)
+//           )",
+//           ".validate": "!data.exists()"
+//         }
+//       }
+//     }
+//   }
+// },
+// "stadium_cms": {
+//   "$club": {
+//     ".write": "auth != null && root.child('app_configs/owner_emails')
+//       .hasChild(auth.token.email)"
+//   }
+// },
+// "cards": {
+//   "$club": {
+//     ".write": "auth != null && root.child('app_configs/owner_emails')
+//       .hasChild(auth.token.email)"
+//   }
+// }

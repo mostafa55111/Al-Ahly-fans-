@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gomhor_alahly_clean_new/core/navigation/app_shell.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
+import 'package:gomhor_alahly_clean_new/core/widgets/brand_auth_snackbar.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/pages/phone_login_page.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/pages/register_page.dart';
-
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 /// شاشة تسجيل الدخول الموحّدة
 /// تدعم: البريد + كلمة المرور، حساب Google، رقم الهاتف
 class LoginPage extends StatefulWidget {
@@ -124,11 +125,9 @@ class _LoginPageState extends State<LoginPage> {
             (route) => false,
           );
         } else if (state.status == AuthStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? 'خطأ غير متوقع'),
-              backgroundColor: AppColors.royalRed,
-            ),
+          showBrandAuthErrorSnackBar(
+            context,
+            state.errorMessage ?? 'خطأ غير متوقع',
           );
         }
       },
@@ -253,7 +252,7 @@ class _LoginPageState extends State<LoginPage> {
     return Column(
       children: [
         Hero(
-          tag: 'app_logo',
+          tag: 'app_club_logo',
           child: Container(
             width: 94,
             height: 94,
@@ -271,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.all(6),
             child: ClipOval(
               child: Image.asset(
-                'assets/images/logo.png',
+                'assets/images/ahly_logo.png',
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   color: AppColors.royalRed,
@@ -335,12 +334,11 @@ class _LoginPageState extends State<LoginPage> {
       decoration: InputDecoration(
         labelText: 'كلمة المرور',
         prefixIcon: const Icon(Icons.lock_outline),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-            color: AppColors.luminousGold,
-          ),
+        suffixIcon: CustomIconButton(
+          icon: _obscurePassword ? Icons.visibility_off : Icons.visibility,
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+          semanticsLabel: 'إظهار أو إخفاء كلمة المرور في حقل تسجيل الدخول',
+          color: AppColors.luminousGold,
         ),
       ),
       validator: (v) {

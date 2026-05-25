@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/domain/entities/auth_user.dart';
+import 'package:gomhor_alahly_clean_new/features/auth/domain/exceptions/fan_app_registry_exception.dart';
 import 'package:gomhor_alahly_clean_new/features/auth/domain/repositories/auth_repository.dart';
 
 part 'auth_state.dart';
@@ -144,6 +145,9 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   String _extractErrorMessage(Object error) {
+    if (error is FanAppRegistryException) {
+      return error.message;
+    }
     final str = error.toString();
     if (str.startsWith('Exception: ')) {
       return str.substring('Exception: '.length);

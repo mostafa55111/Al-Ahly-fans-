@@ -27,7 +27,12 @@ import 'package:share_plus/share_plus.dart';
 /// - Lazy loading عند الاقتراب من آخر ريل
 /// - `AutomaticKeepAliveClientMixin` على كل tile لمنع إعادة بناء الواجهة
 class TikTokReelsPage extends StatefulWidget {
-  const TikTokReelsPage({super.key});
+  const TikTokReelsPage({
+    super.key,
+    required this.isTabActive,
+  });
+
+  final bool isTabActive;
 
   @override
   State<TikTokReelsPage> createState() => _TikTokReelsPageState();
@@ -75,6 +80,24 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
 
     // تحميل الفيد الافتراضي (For You)
     context.read<ReelsFeedCubit>().loadReels();
+    _isTabActive = widget.isTabActive;
+  }
+
+  @override
+  void didUpdateWidget(covariant TikTokReelsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isTabActive == widget.isTabActive) return;
+    _isTabActive = widget.isTabActive;
+    if (_isTabActive) {
+      _controllerManager.resumeCurrent();
+      _rankingService.resumeTracking();
+      _activityTracker.setPlaying(true);
+      return;
+    }
+    _controllerManager.pauseAll();
+    _rankingService.pauseTracking();
+    _activityTracker.setPlaying(false);
+    _activityTracker.flush();
   }
 
   /// يُستدعى عند تغيّر أي InheritedWidget نعتمد عليه — تحديداً
@@ -84,20 +107,7 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final active = AppTabScope.of(context) == kReelsTabIndex;
-    if (active == _isTabActive) return;
-    _isTabActive = active;
-
-    if (active) {
-      _controllerManager.resumeCurrent();
-      _rankingService.resumeTracking();
-      _activityTracker.setPlaying(true);
-    } else {
-      _controllerManager.pauseAll();
-      _rankingService.pauseTracking();
-      _activityTracker.setPlaying(false);
-      _activityTracker.flush();
-    }
+    _isTabActive = widget.isTabActive;
   }
 
   @override
@@ -125,9 +135,11 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
         _activityTracker.flush();
         break;
       case AppLifecycleState.resumed:
-        _controllerManager.resumeCurrent();
-        _rankingService.resumeTracking();
-        _activityTracker.setPlaying(true);
+        if (widget.isTabActive) {
+          _controllerManager.resumeCurrent();
+          _rankingService.resumeTracking();
+          _activityTracker.setPlaying(true);
+        }
         break;
       case AppLifecycleState.detached:
         _rankingService.flush();
@@ -201,6 +213,11 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
     if (_lastTrackedId == null && reels.isNotEmpty) {
       _startTrackingCurrent();
     }
+    if (!widget.isTabActive) {
+      _controllerManager.pauseAll();
+      _rankingService.pauseTracking();
+      _activityTracker.setPlaying(false);
+    }
   }
 
   /// عند التبديل بين الفيدين: reset index + tracking + إعادة PageView لأعلى.
@@ -235,12 +252,12 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
   /// المشاركة فعلاً (success) قبل زيادة العدّاد — عشان يبقى صارم.
   Future<void> _shareVideo(VideoModel reel) async {
     final shareText = reel.caption.isNotEmpty
-        ? '${reel.caption}\n\n${reel.videoUrl}\n\nشارك من تطبيق جمهور الأهلي 🦅'
-        : 'ريل من جمهور الأهلي 🦅\n${reel.videoUrl}';
+        ? '${reel.caption}\n\n${reel.videoUrl}\n\nشارك من تطبيق زملكاوي ⚪'
+        : 'ريل من زملكاوي ⚪\n${reel.videoUrl}';
     try {
       final result = await Share.shareWithResult(
         shareText,
-        subject: 'ريل من جمهور الأهلي',
+        subject: 'ريل من زملكاوي',
       );
       if (!mounted) return;
       // لا نزيد العدّاد لو المستخدم لغى أو فشلت المشاركة
@@ -267,8 +284,7 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
               ? 'تم حفظ الريل في محفوظاتك ✨'
               : 'تم إزالة الريل من المحفوظات',
         ),
-        backgroundColor:
-            willBeSaved ? AppColors.royalRed : Colors.black87,
+        backgroundColor: willBeSaved ? AppColors.royalBlue : Colors.black87,
       ),
     );
   }
@@ -299,7 +315,8 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
   void _listenFollowingUsers() {
     final me = FirebaseAuth.instance.currentUser?.uid;
     if (me == null) return;
-    _followingSub = FirebaseDatabase.instance.ref('follows/$me').onValue.listen((event) {
+    _followingSub =
+        FirebaseDatabase.instance.ref('follows/$me').onValue.listen((event) {
       final raw = event.snapshot.value;
       final ids = <String>{};
       if (raw is Map) {
@@ -321,8 +338,10 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
     final me = FirebaseAuth.instance.currentUser?.uid;
     if (me == null || me == targetUserId) return;
     final isFollowing = _followingUsers.contains(targetUserId);
-    final myFollowingRef = FirebaseDatabase.instance.ref('follows/$me/$targetUserId');
-    final targetFollowersRef = FirebaseDatabase.instance.ref('followers/$targetUserId/$me');
+    final myFollowingRef =
+        FirebaseDatabase.instance.ref('follows/$me/$targetUserId');
+    final targetFollowersRef =
+        FirebaseDatabase.instance.ref('followers/$targetUserId/$me');
     try {
       if (isFollowing) {
         await myFollowingRef.remove();
@@ -342,7 +361,8 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
   /// فتح بروفايل صاحب الريل (وضع عرض فقط لمستخدم آخر).
   void _openUserProfile(VideoModel reel) {
     _controllerManager.pauseAll();
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute<void>(
         builder: (_) => UserProfileViewPage(
           userId: reel.userId,
@@ -350,12 +370,13 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
           fallbackAvatar: reel.userProfilePic,
         ),
       ),
-    ).then((_) {
-      if (mounted) _controllerManager.resumeCurrent();
+    )
+        .then((_) {
+      if (mounted && widget.isTabActive) {
+        _controllerManager.resumeCurrent();
+      }
     });
   }
-
-  void _toggleMute() => _controllerManager.setMuted(!_controllerManager.isMuted);
 
   /// فتح شاشة اختيار الريل — الشاشة ترجع `UploadReelRequest`، والرفع نفسه
   /// يتم في الخلفية هنا ثم نعرض SnackBar (أخضر للنجاح / أحمر للفشل).
@@ -379,8 +400,10 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
     );
 
     if (!mounted) return;
-    _controllerManager.resumeCurrent();
-    _startTrackingCurrent();
+    if (widget.isTabActive) {
+      _controllerManager.resumeCurrent();
+      _startTrackingCurrent();
+    }
 
     if (request == null) return; // المستخدم لغى
 
@@ -408,6 +431,7 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
         videoFile: req.videoFile,
         caption: req.caption,
         isPrivate: req.isPrivate,
+        visibility: req.visibility,
       );
       if (!mounted) return;
       // انتقل لأول ريل فقط لو الريل عام (مش خاص)
@@ -518,8 +542,9 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
     if (feed.status == ReelsFeedStatus.error && feed.reels.isEmpty) {
       return _ErrorView(
         message: feed.errorMessage ?? 'حدث خطأ',
-        onRetry: () =>
-            context.read<ReelsFeedCubit>().switchFeed(state.currentFeed, forceReload: true),
+        onRetry: () => context
+            .read<ReelsFeedCubit>()
+            .switchFeed(state.currentFeed, forceReload: true),
       );
     }
     if (feed.reels.isEmpty) {
@@ -562,7 +587,6 @@ class _TikTokReelsPageState extends State<TikTokReelsPage>
             onSave: () => _handleSave(reel),
             onFollow: () => _toggleFollow(reel.userId),
             onProfileTap: () => _openUserProfile(reel),
-            onToggleMute: _toggleMute,
           );
         },
       ),
@@ -613,9 +637,8 @@ class _FeedTabsBar extends StatelessWidget {
               _TabItem(
                 label: 'لك',
                 active: currentFeed == FeedType.forYou,
-                onTap: () => context
-                    .read<ReelsFeedCubit>()
-                    .switchFeed(FeedType.forYou),
+                onTap: () =>
+                    context.read<ReelsFeedCubit>().switchFeed(FeedType.forYou),
               ),
             ],
           ),
@@ -678,8 +701,7 @@ class _TabItem extends StatelessWidget {
                 boxShadow: active
                     ? [
                         BoxShadow(
-                          color:
-                              AppColors.luminousGold.withValues(alpha: 0.6),
+                          color: AppColors.luminousGold.withValues(alpha: 0.6),
                           blurRadius: 6,
                         ),
                       ]

@@ -1,12 +1,20 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:gomhor_alahly_clean_new/core/config/fan_app_identity.dart';
 import 'package:gomhor_alahly_clean_new/core/theme/app_theme.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/data/models/video_model.dart';
+import 'package:gomhor_alahly_clean_new/features/reels/data/services/reels_hashtag_utils.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/providers/video_controller_manager.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/tiktok_reel_video.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/tiktok_side_actions.dart';
 
 /// عنصر ريل واحد بكامل الشاشة بأسلوب تيك توك.
+///
+/// **التخزين المؤقت:** لا يُنشئ هذا الـ Widget مشغّلاً من الرابط مباشرة.
+/// [VideoControllerManager] يجلب الملف عبر [flutter_cache_manager]
+/// (`getSingleFile`) ثم يشغّل عبر [VideoPlayerController.file] — أي تدفّق من القرص بعد التخزين.
 ///
 /// مُزوّد بـ [AutomaticKeepAliveClientMixin] للحفاظ على حالة الـ UI
 /// (مثل animation القلب، والموضع بين الصفحات) عند العودة إلى نفس الـ index
@@ -28,7 +36,18 @@ class TikTokReelTile extends StatefulWidget {
   final VoidCallback onSave;
   final VoidCallback onFollow;
   final VoidCallback onProfileTap;
-  final VoidCallback onToggleMute;
+
+  /// عند تجاوز عتبة مشاهدة (~70%) لمرّة واحدة لكل ظهور للبلاطة.
+  final VoidCallback? onQualifiedWatch;
+
+  /// عند الضغط على هاشتاج في الوصف (النص بدون # مُطبَّع).
+  final ValueChanged<String>? onHashtagTap;
+
+  /// فتح صفحة الترند الصوتي — ضغطة على شريط الموسيقى.
+  final VoidCallback? onMusicTap;
+
+  /// قائمة خيارات (مثل «غير مهتم») بعد ضغط مطوّل على الفيديو.
+  final VoidCallback? onVideoLongPress;
 
   const TikTokReelTile({
     super.key,
@@ -44,7 +63,10 @@ class TikTokReelTile extends StatefulWidget {
     required this.onSave,
     required this.onFollow,
     required this.onProfileTap,
-    required this.onToggleMute,
+    this.onQualifiedWatch,
+    this.onHashtagTap,
+    this.onMusicTap,
+    this.onVideoLongPress,
   });
 
   @override
@@ -74,8 +96,8 @@ class _TikTokReelTileState extends State<TikTokReelTile>
   }
 
   void _handleDoubleTap() {
+    HapticFeedback.mediumImpact();
     // double tap بأسلوب تيك توك = إعجاب فقط، ما بيلغيش الإعجاب
-    // → يمنع تذبذب العدّاد عند الضغط المزدوج على ريل أُعجب به من قبل
     widget.onLikeOnly();
     _heartController.forward(from: 0);
   }
@@ -96,7 +118,8 @@ class _TikTokReelTileState extends State<TikTokReelTile>
       children: [
         // ========== الفيديو (يعيد البناء فقط عند تغيّر المدير) ==========
         Positioned.fill(
-          child: ListenableBuilder(
+          child: RepaintBoundary(
+            child: ListenableBuilder(
             listenable: widget.manager,
             builder: (context, _) {
               final controller = widget.manager.controllerFor(widget.index);
@@ -107,8 +130,11 @@ class _TikTokReelTileState extends State<TikTokReelTile>
                 hasError: hasError,
                 onTogglePlayPause: _handleTogglePlay,
                 onDoubleTap: _handleDoubleTap,
+                onLongPress: widget.onVideoLongPress,
+                onWatchThresholdReached: widget.onQualifiedWatch,
               );
             },
+          ),
           ),
         ),
 
@@ -134,8 +160,8 @@ class _TikTokReelTileState extends State<TikTokReelTile>
         // ========== قلب الـ double tap ==========
         _AnimatedHeart(controller: _heartController),
 
-        // ملاحظة: شريط التابات "متابَعون | لك" مرسوم مرة واحدة في
-        // [TikTokReelsPage] عبر [_FeedTabsBar]، فلا نكرّره هنا.
+        // ملاحظة: شريط التابات + زر «جمهورك | الكل» في [TikTokReelsPage] —
+        // لا نكررها داخل البلاطة.
 
         // ========== بيانات الفيديو (اسم + وصف + موسيقى) ==========
         Positioned(
@@ -158,7 +184,8 @@ class _TikTokReelTileState extends State<TikTokReelTile>
         Positioned(
           right: 10,
           bottom: 18,
-          child: SafeArea(
+          child: RepaintBoundary(
+            child: SafeArea(
             top: false,
             child: ListenableBuilder(
               // نُعيد بناء الأزرار فقط عند تحديث بيانات الريل (likes, ...)
@@ -174,7 +201,11 @@ class _TikTokReelTileState extends State<TikTokReelTile>
                   commentsCount: widget.reel.commentsCount,
                   sharesCount: widget.reel.sharesCount,
                   savesCount: widget.reel.savesCount,
-                  onLike: widget.onLike,
+                  onLike: () {
+                    final willLike = !widget.reel.isLikedByCurrentUser;
+                    widget.onLike();
+                    if (willLike) _heartController.forward(from: 0);
+                  },
                   onComment: widget.onComment,
                   onShare: widget.onShare,
                   onSave: widget.onSave,
@@ -185,59 +216,9 @@ class _TikTokReelTileState extends State<TikTokReelTile>
             ),
           ),
         ),
-
-        // ========== زر كتم الصوت — منطقة ضغط كبيرة + animation واضح ==========
-        Positioned(
-          top: 50,
-          left: 10,
-          child: SafeArea(
-            child: ListenableBuilder(
-              listenable: widget.manager,
-              builder: (context, _) {
-                final isMuted = widget.manager.isMuted;
-                return Material(
-                  color: Colors.transparent,
-                  shape: const CircleBorder(),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: widget.onToggleMute,
-                    splashColor: Colors.white24,
-                    highlightColor: Colors.white10,
-                    customBorder: const CircleBorder(),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        transitionBuilder: (child, anim) => ScaleTransition(
-                          scale: anim,
-                          child: FadeTransition(opacity: anim, child: child),
-                        ),
-                        child: Icon(
-                          isMuted
-                              ? Icons.volume_off_rounded
-                              : Icons.volume_up_rounded,
-                          key: ValueKey(isMuted),
-                          color: isMuted
-                              ? const Color(0xFFFF5C5C)
-                              : Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
         ),
+
+        // الجمهور والصوت: يُداران من [TikTokReelsPage] (زر split) والفيديو يبقى بصوت طبيعي افتراضياً.
       ],
     );
   }
@@ -250,40 +231,48 @@ class _TikTokReelTileState extends State<TikTokReelTile>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // الاسم قابل للضغط → يفتح بروفايل صاحب الريل (بارز زي تيك توك)
-        GestureDetector(
-          onTap: widget.onProfileTap,
-          behavior: HitTestBehavior.opaque,
-          child: Row(
-            children: [
-              Text(
-                '@$name',
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.2,
-                  shadows: [
-                    Shadow(color: Colors.black87, blurRadius: 8),
-                    Shadow(color: Colors.black54, blurRadius: 2),
-                  ],
-                ),
+        // الاسم قابل للضغط → يفتح بروفايل صاحب الريل (مع دلالات للوصول / Robo)
+        Semantics(
+          button: true,
+          label: 'فتح بروفايل @$name',
+          child: Tooltip(
+            message: 'بروفايل صاحب الريل',
+            child: GestureDetector(
+              onTap: widget.onProfileTap,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  Text(
+                    '@$name',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                      shadows: [
+                        Shadow(color: Colors.black87, blurRadius: 8),
+                        Shadow(color: Colors.black54, blurRadius: 2),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         if (caption.isNotEmpty) ...[
           const SizedBox(height: 6),
-          _TikTokCaption(text: caption),
+          _TikTokCaption(
+            text: caption,
+            onTagTap: widget.onHashtagTap,
+          ),
         ],
         const SizedBox(height: 10),
-        // صف الموسيقى بستايل تيك توك (أيقونة موسيقى + marquee خفيف)
         _MusicStrip(
-          label: caption.isNotEmpty
-              ? 'الصوت الأصلي — $name'
-              : 'الصوت الأصلي — جمهور الأهلي',
+          label: widget.reel.audioDisplayLabel,
+          onTap: widget.onMusicTap,
         ),
       ],
     );
@@ -291,11 +280,16 @@ class _TikTokReelTileState extends State<TikTokReelTile>
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// MARK: وصف الريل بستايل تيك توك — ألوان للهاشتاقات + "...المزيد"
+// MARK: وصف الريل — هاشتاجات قابلة للضغط + طي/فتح
 // ═══════════════════════════════════════════════════════════════════
 class _TikTokCaption extends StatefulWidget {
   final String text;
-  const _TikTokCaption({required this.text});
+  final ValueChanged<String>? onTagTap;
+
+  const _TikTokCaption({
+    required this.text,
+    this.onTagTap,
+  });
 
   @override
   State<_TikTokCaption> createState() => _TikTokCaptionState();
@@ -303,22 +297,56 @@ class _TikTokCaption extends StatefulWidget {
 
 class _TikTokCaptionState extends State<_TikTokCaption> {
   bool _expanded = false;
+  final List<TapGestureRecognizer> _recognizers = [];
 
-  /// تقسيم النص لكلمات عادية + هاشتاقات بنمط مميز (أزرق فاتح بولد).
-  List<TextSpan> _buildSpans(String text) {
-    final spans = <TextSpan>[];
-    final regex = RegExp(r'(#[\u0600-\u06FFA-Za-z0-9_]+)');
-    int last = 0;
+  @override
+  void didUpdateWidget(covariant _TikTokCaption oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _disposeRecognizers();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposeRecognizers();
+    super.dispose();
+  }
+
+  void _disposeRecognizers() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  List<InlineSpan> _buildSpans() {
+    _disposeRecognizers();
+    const hashtagStyle = TextStyle(
+      color: Color(0xFF9AD4FF),
+      fontWeight: FontWeight.w700,
+    );
+    final spans = <InlineSpan>[];
+    final regex = RegExp(r'(#[\u0600-\u06FFA-Za-z0-9_]+)', unicode: true);
+    var last = 0;
+    final text = widget.text;
     for (final m in regex.allMatches(text)) {
       if (m.start > last) {
         spans.add(TextSpan(text: text.substring(last, m.start)));
       }
+      final rawTag = m.group(0)!;
+      TapGestureRecognizer? rec;
+      if (widget.onTagTap != null) {
+        rec = TapGestureRecognizer()
+          ..onTap = () {
+            widget.onTagTap!(ReelsHashtagUtils.normalizeTag(rawTag));
+          };
+        _recognizers.add(rec);
+      }
       spans.add(TextSpan(
-        text: m.group(0),
-        style: const TextStyle(
-          color: Color(0xFF9AD4FF),
-          fontWeight: FontWeight.w700,
-        ),
+        text: rawTag,
+        style: hashtagStyle,
+        recognizer: rec,
       ));
       last = m.end;
     }
@@ -341,27 +369,43 @@ class _TikTokCaptionState extends State<_TikTokCaption> {
       ],
     );
 
-    return GestureDetector(
-      onTap: () => setState(() => _expanded = !_expanded),
-      behavior: HitTestBehavior.opaque,
-      child: RichText(
-        maxLines: _expanded ? 10 : 2,
-        overflow: TextOverflow.ellipsis,
-        text: TextSpan(
-          style: baseStyle,
-          children: [
-            ..._buildSpans(widget.text),
-            if (!_expanded)
-              const TextSpan(
-                text: '  المزيد',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w700,
+    final needsToggle = widget.text.length > 96 || widget.text.contains('\n');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text.rich(
+          TextSpan(
+            style: baseStyle,
+            children: _buildSpans(),
+          ),
+          maxLines: _expanded ? 12 : 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (needsToggle)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Semantics(
+              button: true,
+              label: _expanded ? 'طي وصف الريل' : 'توسيع وصف الريل',
+              child: Tooltip(
+                message: _expanded ? 'طي' : 'المزيد',
+                child: GestureDetector(
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: Text(
+                    _expanded ? 'إخفاء' : 'المزيد',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
-          ],
-        ),
-      ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -371,7 +415,9 @@ class _TikTokCaptionState extends State<_TikTokCaption> {
 // ═══════════════════════════════════════════════════════════════════
 class _MusicStrip extends StatefulWidget {
   final String label;
-  const _MusicStrip({required this.label});
+  final VoidCallback? onTap;
+
+  const _MusicStrip({required this.label, this.onTap});
 
   @override
   State<_MusicStrip> createState() => _MusicStripState();
@@ -398,7 +444,7 @@ class _MusicStripState extends State<_MusicStrip>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final row = Row(
       children: [
         RotationTransition(
           turns: _spin,
@@ -428,6 +474,27 @@ class _MusicStripState extends State<_MusicStrip>
         ),
       ],
     );
+
+    if (widget.onTap == null) return row;
+
+    return Semantics(
+      button: true,
+      label: 'فتح الترند الصوتي: ${widget.label}',
+      child: Tooltip(
+        message: 'فتح صفحة الصوت أو الموسيقى',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: row,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -452,18 +519,25 @@ class _AnimatedHeart extends StatelessWidget {
                     ? 1.4 - (t - 0.3) * 0.5
                     : 1.1;
             final opacity = t < 0.7 ? 1.0 : (1.0 - (t - 0.7) / 0.3);
+            final heartColor = FanAppIdentity.registryAppId == 'ahly'
+                ? AppColors.royalRed
+                : AppColors.royalBlue;
             return Opacity(
               opacity: opacity.clamp(0.0, 1.0),
               child: Transform.scale(
                 scale: scale,
                 child: Icon(
                   Icons.favorite,
-                  color: AppColors.brightRed,
-                  size: 120,
+                  color: heartColor,
+                  size: 150,
                   shadows: [
                     Shadow(
-                      color: AppColors.brightRed.withValues(alpha: 0.6),
-                      blurRadius: 24,
+                      color: heartColor.withValues(alpha: 0.65),
+                      blurRadius: 28,
+                    ),
+                    const Shadow(
+                      color: Colors.white54,
+                      blurRadius: 4,
                     ),
                   ],
                 ),

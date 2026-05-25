@@ -11,6 +11,9 @@ import 'package:gomhor_alahly_clean_new/features/auth/presentation/cubit/auth_cu
 import 'package:gomhor_alahly_clean_new/features/auth/presentation/pages/splash_page.dart';
 import 'package:gomhor_alahly_clean_new/firebase_options.dart';
 import 'package:gomhor_alahly_clean_new/core/time/egypt_server_time_service.dart';
+import 'package:gomhor_alahly_clean_new/core/time/app_clock_bootstrap.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/production_deployment/crowd_deployment_bootstrap.dart';
+import 'package:gomhor_alahly_clean_new/features/crowd/production_deployment/ui/staging_environment_banner.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/domain/repositories/crowd_repository.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/presentation/widgets/nesr_celebration_overlay.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/services/celebration_seen_store.dart';
@@ -62,11 +65,16 @@ void main() async {
     debugPrint('✅ Service Locator setup complete');
     // مزامنة أولية مع ساعة Firebase (نفس منطق ServerValue — انظر EgyptServerTimeService)
     try {
-      await getIt<EgyptServerTimeService>()
-          .refreshOffset()
-          .timeout(const Duration(seconds: 5));
+      await AppClockBootstrap.initialize(getIt<EgyptServerTimeService>())
+          .timeout(const Duration(seconds: 8));
     } catch (e) {
-      debugPrint('⚠️ Server time sync: $e');
+      debugPrint('⚠️ App clock bootstrap: $e');
+    }
+    try {
+      await CrowdDeploymentBootstrap.initialize()
+          .timeout(const Duration(seconds: 12));
+    } catch (e) {
+      debugPrint('⚠️ Crowd deployment bootstrap: $e');
     }
   } catch (e) {
     debugPrint('❌ Service Locator failed: $e');
@@ -90,13 +98,15 @@ class AhlyApp extends StatelessWidget {
         // دعم اللغة العربية والكتابة من اليمين لليسار
         locale: const Locale('ar', 'EG'),
         builder: (context, child) {
-          return NesrCelebrationOverlay(
-            serverTime: getIt<EgyptServerTimeService>(),
-            repository: getIt<CrowdRepository>(),
-            seenStore: getIt<CelebrationSeenStore>(),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: child ?? const SizedBox(),
+          return StagingEnvironmentBanner(
+            child: NesrCelebrationOverlay(
+              serverTime: getIt<EgyptServerTimeService>(),
+              repository: getIt<CrowdRepository>(),
+              seenStore: getIt<CelebrationSeenStore>(),
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: child ?? const SizedBox(),
+              ),
             ),
           );
         },

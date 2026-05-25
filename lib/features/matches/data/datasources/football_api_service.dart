@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
+import 'package:gomhor_alahly_clean_new/core/config/app_config.dart';
+import 'package:gomhor_alahly_clean_new/core/exceptions/app_exceptions.dart';
+import 'package:gomhor_alahly_clean_new/core/network/api_client.dart';
 import 'package:gomhor_alahly_clean_new/features/matches/data/models/league_table_entry.dart';
 
 /// ═════════════════════════════════════════════════════════════════
@@ -15,8 +17,8 @@ import 'package:gomhor_alahly_clean_new/features/matches/data/models/league_tabl
 ///   بينما الموسم السابق يبقى مكتملاً = أقرب لـ «آخر مباراة» موثوقة.
 /// - بيانات المجتمع ليست رسمية؛ للدقة القصوى يلزم API رياضي مدفوع.
 class FootballApiService {
-  static const String _basePath =
-      'https://www.thesportsdb.com/api/v1/json/3';
+  static String get _basePath =>
+      '${AppConfig.theSportDbBaseUrl}/${AppConfig.theSportDbApiKey}';
 
   static const String alAhlyTeamIdStr = '138995';
   static const int alAhlyTeamId = 138995;
@@ -34,10 +36,23 @@ class FootballApiService {
     '4503', // FIFA Club World Cup
   ];
 
-  final http.Client _client;
+  final ApiClient _api;
 
-  FootballApiService({http.Client? client})
-      : _client = client ?? http.Client();
+  FootballApiService({ApiClient? api})
+      : _api = api ??
+            ApiClient(
+              dio: Dio(
+                BaseOptions(
+                  connectTimeout: AppConfig.connectTimeoutDuration,
+                  receiveTimeout: AppConfig.receiveTimeoutDuration,
+                  responseType: ResponseType.json,
+                  contentType: 'application/json',
+                ),
+              ),
+              defaultHeaders: const <String, String>{
+                'Accept': 'application/json',
+              },
+            );
 
   // ══════════════════════════════════════════════════════════════
   // مباريات — موسمين دمج
@@ -155,27 +170,27 @@ class FootballApiService {
     );
     debugPrint('[TheSportsDB] GET $uri');
     try {
-      final res = await _client
-          .get(uri)
-          .timeout(const Duration(seconds: 30));
-      if (res.statusCode != 200) {
-        throw FootballApiException(
-          'الخادم ردّ بـ ${res.statusCode}',
-          statusCode: res.statusCode,
-        );
-      }
-      final dec = jsonDecode(res.body) as Map<String, dynamic>?;
-      return dec ?? <String, dynamic>{};
+      final data = await _api.getJson<dynamic>(uri.toString());
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      throw const FootballApiException('استجابة غير متوقعة من الخادم');
     } on TimeoutException {
       throw const FootballApiException('انتهت مهلة الاتصال بالسيرفر');
+    } on AppException catch (e) {
+      throw FootballApiException(e.message, statusCode: _statusCodeOf(e));
     } on FootballApiException {
       rethrow;
     } catch (e) {
+      // Dio timeout/errors تتحول إلى AppException داخل ApiClient
+      // واللي يوصل هنا غالبًا parsing/logic.
       throw FootballApiException('فشل الطلب: $e');
     }
   }
 
-  void close() => _client.close();
+  int? _statusCodeOf(AppException e) {
+    if (e is ServerException) return e.statusCode;
+    return null;
+  }
 }
 
 class FootballApiException implements Exception {

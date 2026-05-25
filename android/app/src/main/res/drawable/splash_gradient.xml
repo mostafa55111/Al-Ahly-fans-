@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- تدرج يتماشى مع شاشة بداية الأهلي (بورجوندي → أسود) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#FF5C1018"
+                android:centerColor="#FF2B090D"
+                android:endColor="#FF000000" />
+        </shape>
+    </item>
+</layer-list>

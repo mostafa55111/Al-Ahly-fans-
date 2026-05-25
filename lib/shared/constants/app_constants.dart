@@ -14,11 +14,21 @@ class AppConstants {
   static const String darkColor = '#0A0A0A'; // أسود عميق
 
   // Firebase
-  static const String firebaseProjectId = 'ahly-fans-app';
-  static const String firebaseApiKey = 'YOUR_API_KEY';
-  static const String firebaseAppId = 'YOUR_APP_ID';
+  static const String firebaseProjectId = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+    defaultValue: 'ahly-fans-app',
+  );
+  static const String firebaseApiKey = String.fromEnvironment(
+    'FIREBASE_API_KEY',
+    defaultValue: '',
+  );
+  static const String firebaseAppId = String.fromEnvironment(
+    'FIREBASE_APP_ID',
+    defaultValue: '',
+  );
 
   // API Endpoints
+  /// Deprecated: استخدم `AppConfig.appApiBaseUrl` أو `ApiConstants.baseUrl`.
   static const String baseApiUrl = 'https://api.ahly-fans-app.com';
   static const String apiVersion = 'v1';
 

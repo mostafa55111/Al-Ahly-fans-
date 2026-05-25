@@ -1,0 +1,72 @@
+// Firebase RTDB rules snippet — voting scale & immutability
+// Merge into database.rules.json under your match_votes and awards nodes.
+
+{
+  "rules": {
+    "match_votes": {
+      "$club": {
+        "active_match": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('admins').child(auth.uid).val() == true"
+        },
+        "players": {
+          "$playerId": {
+            ".read": "auth != null",
+            "votes": {
+              ".write": "auth != null && (!data.exists() || newData.val() == data.val() + 1)"
+            },
+            "$other": {
+              ".write": "auth != null && root.child('admins').child(auth.uid).val() == true"
+            }
+          }
+        },
+        "user_votes": {
+          "$matchId": {
+            "$uid": {
+              ".read": "auth != null && auth.uid == $uid",
+              ".write": "auth != null && auth.uid == $uid && !data.exists()",
+              ".validate": "newData.hasChildren(['votedPlayerId', 'timestamp'])"
+            }
+          },
+          "$uid": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid && !data.exists()",
+            ".validate": "newData.hasChildren(['votedPlayerId', 'timestamp'])"
+          }
+        }
+      }
+    },
+    "awards": {
+      "$club": {
+        "matches": {
+          "$year": {
+            "$matchId": {
+              ".read": "auth != null",
+              ".write": "auth != null && root.child('admins').child(auth.uid).val() == true && !data.exists()"
+            }
+          }
+        },
+        "monthly": {
+          "$monthKey": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('admins').child(auth.uid).val() == true"
+          }
+        },
+        "season": {
+          "$seasonKey": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('admins').child(auth.uid).val() == true"
+          }
+        }
+      }
+    },
+    "player_awards": {
+      "$club": {
+        "$playerId": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('admins').child(auth.uid).val() == true"
+        }
+      }
+    }
+  }
+}

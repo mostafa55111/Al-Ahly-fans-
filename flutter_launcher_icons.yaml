@@ -1,0 +1,14 @@
+# أيقونة جمهور الأهلي — نفس مسار الشعار الكامل؛ inset = 0 لملء الـforeground بالكامل.
+# dart run flutter_launcher_icons -f flutter_launcher_icons.yaml
+# إن أعادت الأداة عنصر inset في mipmap-anydpi-v26/ic_launcher.xml فاستبدله بـ:
+# <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/ahly_logo.png"
+  adaptive_icon_background: "#1A080C"
+  adaptive_icon_foreground: "assets/images/ahly_logo.png"
+  adaptive_icon_foreground_inset: 0
+  background_color_ios: "#1A080C"
+  remove_alpha_ios: true

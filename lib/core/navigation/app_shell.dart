@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gomhor_alahly_clean_new/core/di/service_locator_improved.dart';
 import 'package:gomhor_alahly_clean_new/features/crowd/presentation/pages/crowd_screen.dart';
 import 'package:gomhor_alahly_clean_new/features/profile/presentation/pages/profile_screen.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/cubit/reels_feed_cubit.dart';
@@ -26,8 +28,7 @@ class AppTabScope extends InheritedWidget {
   });
 
   @override
-  bool updateShouldNotify(AppTabScope old) =>
-      old.currentIndex != currentIndex;
+  bool updateShouldNotify(AppTabScope old) => old.currentIndex != currentIndex;
 
   static int of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppTabScope>();
@@ -42,6 +43,13 @@ class AppTabScope extends InheritedWidget {
 /// - الأيقونة النشطة: أحمر فاتح (لكل التبويبات بلا استثناء — بما فيها الريلز)
 /// - الأيقونات غير النشطة: أبيض عادي
 class AppShell extends StatefulWidget {
+  static const String aiBubbleHiddenPrefKey = 'ai_bubble_hidden_by_user';
+
+  static Future<void> setAiBubbleHiddenByUser(bool hidden) async {
+    final prefs = getIt<SharedPreferences>();
+    await prefs.setBool(aiBubbleHiddenPrefKey, hidden);
+  }
+
   /// التبويب الافتراضي عند الدخول — الريلز هو الوسط
   final int initialIndex;
 
@@ -64,22 +72,23 @@ class _AppShellState extends State<AppShell> {
   List<Widget> _pages(Map<dynamic, dynamic> controls) => [
         _tabEnabled(controls, 'profileEnabled')
             ? const ProfileScreen()
-            : const _FeatureDisabledView(label: 'حسابي'),
+            : const _FeatureDisabledView(label: 'Profile'),
         _tabEnabled(controls, 'travelEnabled')
             ? const TravelPage()
-            : const _FeatureDisabledView(label: 'الترحال'),
+            : const _FeatureDisabledView(label: 'Travel'),
         _tabEnabled(controls, 'reelsEnabled')
             ? BlocProvider(
                 create: (_) => ReelsFeedCubit(),
-                child: const TikTokReelsPage(),
+                child: TikTokReelsPage(
+                    isTabActive: _currentIndex == kReelsTabIndex),
               )
-            : const _FeatureDisabledView(label: 'الريلز'),
+            : const _FeatureDisabledView(label: 'Reels'),
         _tabEnabled(controls, 'storeEnabled')
             ? const StorePage()
-            : const _FeatureDisabledView(label: 'المتجر'),
+            : const _FeatureDisabledView(label: 'Store'),
         _tabEnabled(controls, 'crowdEnabled')
             ? const CrowdScreen()
-            : const _FeatureDisabledView(label: 'الجمهور'),
+            : const _FeatureDisabledView(label: 'Crowd'),
       ];
 
   bool _tabEnabled(Map<dynamic, dynamic> controls, String key) {
@@ -92,27 +101,27 @@ class _AppShellState extends State<AppShell> {
     _NavItem(
       icon: Icons.person_outline,
       activeIcon: Icons.person,
-      label: 'حسابي',
+      label: 'Profile',
     ),
     _NavItem(
       icon: Icons.flight_takeoff_outlined,
       activeIcon: Icons.flight_takeoff,
-      label: 'الترحال',
+      label: 'Travel',
     ),
     _NavItem(
       icon: Icons.play_circle_outline,
       activeIcon: Icons.play_circle_filled_rounded,
-      label: 'الريلز',
+      label: 'Reels',
     ),
     _NavItem(
       icon: Icons.storefront_outlined,
       activeIcon: Icons.storefront,
-      label: 'المتجر',
+      label: 'Store',
     ),
     _NavItem(
       icon: Icons.people_alt_outlined,
       activeIcon: Icons.people_alt,
-      label: 'الجمهور',
+      label: 'Crowd',
     ),
   ];
 
@@ -257,7 +266,7 @@ class _FeatureDisabledView extends StatelessWidget {
       alignment: Alignment.center,
       padding: const EdgeInsets.all(24),
       child: Text(
-        'تم إيقاف قسم $label مؤقتاً بواسطة الإدارة',
+        'The $label section has been temporarily disabled by the admin.',
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white70,

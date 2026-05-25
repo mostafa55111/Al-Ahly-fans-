@@ -11,6 +11,7 @@ import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/erro
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/widgets/cache_info_widget.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/providers/video_preload_manager.dart';
 import 'package:gomhor_alahly_clean_new/features/reels/presentation/pages/comments_screen.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 
 class ReelsScreen extends StatefulWidget {
   const ReelsScreen({super.key});
@@ -253,9 +254,12 @@ class _ReelsScreenState extends State<ReelsScreen> {
           return const SizedBox.shrink();
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: CustomFAB(
+        icon: Icons.cloud_upload,
+        semanticsLabel: 'زر رفع فيديو ريل جديد',
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Theme.of(context).colorScheme.onSecondary,
         onPressed: _uploadVideo,
-        child: const Icon(Icons.cloud_upload),
       ),
     );
   }

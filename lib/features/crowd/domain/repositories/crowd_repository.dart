@@ -27,6 +27,10 @@ abstract class CrowdRepository {
 
   /// تحميل/حفظ تشكيلة الملعب
   Future<Map<String, String>> loadUserFormation(String uid);
+
+  /// تحديثات لحظية لتشكيلة المستخدم (`users/{uid}/crowd/formation`).
+  Stream<Map<String, String>> watchUserFormation(String uid);
+
   Future<void> saveUserFormation(String uid, Map<String, String> slotToPlayerId);
   Future<String> loadFormationMode(String uid);
   Future<void> saveFormationMode(String uid, String mode);
@@ -40,6 +44,9 @@ abstract class CrowdRepository {
     required String? cardUrl,
     String? position,
     int? number,
+    String cardType = 'gold',
+    bool active = true,
+    int? power,
   });
 
   /// تعديل لاعب موجود (دمج حقول).
@@ -50,6 +57,17 @@ abstract class CrowdRepository {
 
   /// حذف لاعب.
   Future<void> adminDeletePlayer(String playerId);
+
+  /// تحديث موضع اللاعب على الملعب (مسار `ahly_squad` / `zamalek_squad`).
+  /// يُنفَّذ فقط إذا كان المستخدم الحالي مسجَّلاً في `admins/{uid}` في RTDB.
+  /// عند [clearLayout] يُزال فهرس المركز والإحداثيات من العقدة.
+  Future<void> updateSquadPlayerPitch({
+    required String playerId,
+    int? slotIndex,
+    double? pitchNx,
+    double? pitchNy,
+    bool clearLayout = false,
+  });
 
   /// بدء جلسة تصويت جديدة بـ `ServerValue.timestamp` لـ `startedAt`.
   /// تكتب أيضاً `eligible/{playerId}: true` لكل اللاعبين المؤهَّلين.

@@ -1,24 +1,16 @@
 {
-  "database": {
-    "rules": "database.rules.json"
-  },
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "gomhor-al-ahly",
-          "appId": "1:725028676186:android:95022827cd693f50f62e63",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "gomhor-al-ahly",
-          "configurations": {
-            "android": "1:725028676186:android:95022827cd693f50f62e63"
-          }
-        }
-      }
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
-  }
+  ]
 }

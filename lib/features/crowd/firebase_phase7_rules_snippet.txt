@@ -1,0 +1,78 @@
+# Phase 7 — Firebase rules snippet (RTDB) — DO NOT auto-deploy
+# Paste into your environment-specific rules after review.
+
+{
+  "rules": {
+    "production_incidents": {
+      "$namespace": {
+        "$club": {
+          ".read": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true",
+          ".write": false,
+          "$incidentId": {
+            ".validate": "newData.hasChildren(['type','severity','message','recordedAtMs'])"
+          }
+        }
+      }
+    },
+    "app_configs": {
+      "owner_emails": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true"
+      }
+    },
+    "authority_runtime": {
+      "$club": {
+        "$matchId": {
+          ".read": "auth != null",
+          ".write": "auth != null && (
+            root.child('app_configs/owner_emails').child(auth.token.email.replace('.', '_')).val() === true
+            || newData.child('ownerId').val() === auth.uid
+          )",
+          "lease": {
+            ".validate": "newData.hasChildren(['ownerId','expiresAtMs'])"
+          },
+          "finalized": {
+            ".validate": "newData.val() === true && !data.exists()"
+          }
+        }
+      }
+    },
+    "match_votes": {
+      "$club": {
+        "sessions": {
+          "$sessionId": {
+            "meta": {
+              "finalized": {
+                ".validate": "newData.val() === true && (data.val() !== true || !newData.exists())"
+              }
+            }
+          }
+        }
+      }
+    },
+    "match_vote_shards": {
+      "$club": {
+        "$sessionId": {
+          "$shardId": {
+            "votes": {
+              "$fanId": {
+                ".write": "auth != null && !root.child('match_votes').child($club).child('sessions').child($sessionId).child('meta/finalized').val()",
+                ".validate": "newData.hasChildren(['playerId','castAtMs']) && newData.child('castAtMs').isNumber()"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Remote Config keys (console — per environment project):
+# - crowd_env_lock: development | staging | production
+# - release_channel: internal | alpha | beta | production
+# - crowd_authority_mode: local | remote | hybrid_shadow
+# - crowd_emergency_local_authority: bool
+# - crowd_disable_heavy_preload: bool
+# - crowd_pause_background_hydration: bool
+# - crowd_reduce_thumbnail_promotion: bool
+# - crowd_staging_owner_emails: comma-separated (staging only)

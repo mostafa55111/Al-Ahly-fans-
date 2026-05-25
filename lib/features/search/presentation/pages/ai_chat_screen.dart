@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:gomhor_alahly_clean_new/core/services/ai_assistant_service.dart';
+import 'package:gomhor_alahly_clean_new/shared/widgets/custom_button.dart';
 
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
@@ -11,6 +13,7 @@ class AiChatScreen extends StatefulWidget {
 
 class _AiChatScreenState extends State<AiChatScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
 
@@ -25,6 +28,53 @@ class _AiChatScreenState extends State<AiChatScreen> {
         isUser: false,
       ),
     );
+  }
+
+  Future<void> _analyzePickedImage() async {
+    try {
+      final x = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 88,
+        maxWidth: 1600,
+      );
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      final pathLower = x.path.toLowerCase();
+      final mime =
+          pathLower.endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+      setState(() {
+        _messages.add(ChatMessage(
+          text: '📷 تم إرسال صورة للتحليل…',
+          isUser: true,
+        ));
+        _isLoading = true;
+      });
+
+      final q = _messageController.text.trim().isEmpty
+          ? 'حلّل الصورة: إذا كانت تذكرة أو منتجاً فصف ما تراه.'
+          : _messageController.text.trim();
+      _messageController.clear();
+
+      final response = await AiAssistantService.analyzeImage(
+        imageBytes: bytes,
+        mimeType: mime,
+        userPrompt: q,
+      );
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: response, isUser: false));
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(
+          ChatMessage(text: 'تعذر تحليل الصورة: $e', isUser: false),
+        );
+        _isLoading = false;
+      });
+    }
   }
 
   void _sendMessage() async {
@@ -60,8 +110,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.amber),
+        leading: CustomIconButton(
+          icon: Icons.arrow_back,
+          semanticsLabel: 'زر الرجوع من المساعد الذكي',
+          color: Colors.amber,
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -170,6 +222,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
       child: Row(
         children: [
+          CustomIconButton(
+            tooltip: 'إرفاق صورة (تذكرة / منتج)',
+            onPressed: _isLoading ? null : _analyzePickedImage,
+            icon: Icons.image_outlined,
+            semanticsLabel: 'زر إرفاق صورة للتحليل بالذكاء الاصطناعي',
+            color: Colors.amber,
+          ),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
